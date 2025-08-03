@@ -1,9 +1,13 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, ReactNode } from 'react';
 import { useLocation } from 'react-router-dom';
 import SideNavbar from './SideNavbar';
 import { useApp } from '../context/AppContext';
 
-export default function Layout({ children }) {
+interface LayoutProps {
+  children: ReactNode;
+}
+
+export default function Layout({ children }: LayoutProps) {
   const { state } = useApp();
   const location = useLocation();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -71,8 +75,8 @@ export default function Layout({ children }) {
   );
 }
 
-function getPageTitle(pathname) {
-  const titles = {
+function getPageTitle(pathname: string): string {
+  const titles: { [key: string]: string } = {
     '/dashboard': 'Dashboard',
     '/emails': 'Emails',
     '/tasks': 'Task Bucket',

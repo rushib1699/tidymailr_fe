@@ -4,11 +4,11 @@ import TimePicker from '../TimePicker';
 export default function StepHours() {
   const { state, actions } = useApp();
 
-  const handleWorkingHoursChange = (field, value) => {
+  const handleWorkingHoursChange = (field: 'start' | 'end', value: string): void => {
     actions.updateWorkingHours({ [field]: value });
   };
 
-  const handleBreakHoursChange = (field, value) => {
+  const handleBreakHoursChange = (field: 'start' | 'end', value: string): void => {
     actions.updateBreakHours({ [field]: value });
   };
 

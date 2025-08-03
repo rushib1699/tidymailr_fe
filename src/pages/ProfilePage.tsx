@@ -2,29 +2,39 @@ import { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { accounts, mail } from '../services/api';
 
+interface ConnectedAccount {
+  id: string;
+  email: string;
+  provider: string;
+  emailCount?: number;
+  lastSync?: string;
+  status?: string;
+}
+
 export default function ProfilePage() {
   const { state, actions } = useApp();
-  const [connectedAccounts, setConnectedAccounts] = useState([]);
+  const [connectedAccounts, setConnectedAccounts] = useState<ConnectedAccount[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isDisconnecting, setIsDisconnecting] = useState(null);
-  const [isSyncing, setIsSyncing] = useState(null);
+  const [isDisconnecting, setIsDisconnecting] = useState<string | null>(null);
+  const [isSyncing, setIsSyncing] = useState<string | null>(null);
 
   useEffect(() => {
     loadConnectedAccounts();
   }, []);
 
-  const loadConnectedAccounts = async () => {
+  const loadConnectedAccounts = async (): Promise<void> => {
     try {
       const response = await accounts.getConnectedAccounts();
       setConnectedAccounts(response.accounts || []);
     } catch (error) {
-      actions.setError(error.message);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      actions.setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleDisconnect = async (accountId) => {
+  const handleDisconnect = async (accountId: string): Promise<void> => {
     if (!confirm('Are you sure you want to disconnect this account? This will remove all synced emails.')) {
       return;
     }
@@ -35,20 +45,22 @@ export default function ProfilePage() {
       setConnectedAccounts(prev => prev.filter(acc => acc.id !== accountId));
       actions.setError(null);
     } catch (error) {
-      actions.setError(error.message);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      actions.setError(errorMessage);
     } finally {
       setIsDisconnecting(null);
     }
   };
 
-  const handleSyncAccount = async (accountId) => {
+  const handleSyncAccount = async (accountId: string): Promise<void> => {
     setIsSyncing(accountId);
     try {
       const response = await mail.sync({ accountId });
       actions.setError(null);
       // Show success message or update UI
     } catch (error) {
-      actions.setError(error.message);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      actions.setError(errorMessage);
     } finally {
       setIsSyncing(null);
     }

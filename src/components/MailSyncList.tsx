@@ -1,6 +1,19 @@
 import { useState } from 'react';
 
-export default function MailSyncList({ emails }) {
+interface Email {
+  id?: string;
+  sender?: string;
+  senderName?: string;
+  senderEmail?: string;
+  subject?: string;
+  date?: string;
+}
+
+interface MailSyncListProps {
+  emails: Email[];
+}
+
+export default function MailSyncList({ emails }: MailSyncListProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const emailsPerPage = 20;
 
@@ -9,7 +22,7 @@ export default function MailSyncList({ emails }) {
   const endIndex = startIndex + emailsPerPage;
   const currentEmails = emails.slice(startIndex, endIndex);
 
-  const formatDate = (dateString) => {
+  const formatDate = (dateString: string): string => {
     return new Date(dateString).toLocaleDateString('en-US', {
       month: 'short',
       day: 'numeric',
@@ -18,7 +31,7 @@ export default function MailSyncList({ emails }) {
     });
   };
 
-  const handlePageChange = (page) => {
+  const handlePageChange = (page: number): void => {
     setCurrentPage(page);
   };
 

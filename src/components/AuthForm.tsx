@@ -1,14 +1,30 @@
 import { useState } from 'react';
 
-export default function AuthForm({ onSubmit, isLoading, mode = 'signup' }) {
-  const [formData, setFormData] = useState({
+interface FormData {
+  email: string;
+  password: string;
+}
+
+interface FormErrors {
+  email?: string;
+  password?: string;
+}
+
+interface AuthFormProps {
+  onSubmit: (data: FormData) => void;
+  isLoading: boolean;
+  mode?: 'signup' | 'login';
+}
+
+export default function AuthForm({ onSubmit, isLoading, mode = 'signup' }: AuthFormProps) {
+  const [formData, setFormData] = useState<FormData>({
     email: '',
     password: '',
   });
-  const [errors, setErrors] = useState({});
+  const [errors, setErrors] = useState<FormErrors>({});
 
-  const validateForm = () => {
-    const newErrors = {};
+  const validateForm = (): boolean => {
+    const newErrors: FormErrors = {};
 
     if (!formData.email) {
       newErrors.email = 'Email is required';
@@ -26,20 +42,20 @@ export default function AuthForm({ onSubmit, isLoading, mode = 'signup' }) {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (validateForm()) {
       onSubmit(formData);
     }
   };
 
-  const handleChange = (e) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
       [name]: value,
     }));
-    if (errors[name]) {
+    if (errors[name as keyof FormErrors]) {
       setErrors(prev => ({
         ...prev,
         [name]: '',

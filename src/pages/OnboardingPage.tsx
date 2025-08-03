@@ -5,12 +5,18 @@ import StepCalendar from '../components/OnboardingWizard/StepCalendar';
 import StepHours from '../components/OnboardingWizard/StepHours';
 import StepSync from '../components/OnboardingWizard/StepSync';
 
+interface Step {
+  id: number;
+  title: string;
+  component: React.ComponentType;
+}
+
 export default function OnboardingPage() {
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(1);
   const totalSteps = 4;
 
-  const steps = [
+  const steps: Step[] = [
     { id: 1, title: 'Email Filters', component: StepFilters },
     { id: 2, title: 'Calendar Setup', component: StepCalendar },
     { id: 3, title: 'Working Hours', component: StepHours },
@@ -18,9 +24,9 @@ export default function OnboardingPage() {
   ];
 
   const currentStepData = steps.find(step => step.id === currentStep);
-  const CurrentStepComponent = currentStepData.component;
+  const CurrentStepComponent = currentStepData?.component;
 
-  const handleNext = () => {
+  const handleNext = (): void => {
     if (currentStep < totalSteps) {
       setCurrentStep(prev => prev + 1);
     } else {
@@ -28,13 +34,13 @@ export default function OnboardingPage() {
     }
   };
 
-  const handlePrevious = () => {
+  const handlePrevious = (): void => {
     if (currentStep > 1) {
       setCurrentStep(prev => prev - 1);
     }
   };
 
-  const handleStepClick = (stepId) => {
+  const handleStepClick = (stepId: number): void => {
     setCurrentStep(stepId);
   };
 
@@ -90,7 +96,7 @@ export default function OnboardingPage() {
           <div className="px-6 py-8 md:px-12 md:py-12">
             <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
               <div className="md:col-span-8">
-                <CurrentStepComponent />
+                {CurrentStepComponent && <CurrentStepComponent />}
               </div>
               <div className="md:col-span-4">
                 <div className="bg-gray-50 rounded-lg p-6">

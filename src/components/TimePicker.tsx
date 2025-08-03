@@ -1,4 +1,11 @@
-export default function TimePicker({ value, onChange, label, id }) {
+interface TimePickerProps {
+  value: string;
+  onChange: (value: string) => void;
+  label?: string;
+  id: string;
+}
+
+export default function TimePicker({ value, onChange, label, id }: TimePickerProps) {
   return (
     <div className="flex flex-col space-y-1">
       {label && (

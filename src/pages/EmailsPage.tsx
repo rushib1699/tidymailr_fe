@@ -2,11 +2,22 @@ import { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { mail } from '../services/api';
 
+interface Email {
+  id: string;
+  subject: string;
+  sender: string;
+  preview: string;
+  date: string;
+  read: boolean;
+  priority: 'high' | 'medium' | 'low';
+  category: string;
+}
+
 export default function EmailsPage() {
   const { actions } = useApp();
-  const [emails, setEmails] = useState([]);
+  const [emails, setEmails] = useState<Email[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [selectedEmail, setSelectedEmail] = useState(null);
+  const [selectedEmail, setSelectedEmail] = useState<Email | null>(null);
   const [filter, setFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [isSyncing, setIsSyncing] = useState(false);
@@ -15,10 +26,10 @@ export default function EmailsPage() {
     loadEmails();
   }, []);
 
-  const loadEmails = async () => {
+  const loadEmails = async (): Promise<void> => {
     try {
       // For now, we'll create mock data since the API might not have emails endpoint yet
-      const mockEmails = [
+      const mockEmails: Email[] = [
         {
           id: '1',
           subject: 'Welcome to EmailApp',
@@ -52,26 +63,28 @@ export default function EmailsPage() {
       ];
       setEmails(mockEmails);
     } catch (error) {
-      actions.setError(error.message);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      actions.setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleSync = async () => {
+  const handleSync = async (): Promise<void> => {
     setIsSyncing(true);
     try {
       await mail.sync({});
       await loadEmails();
       actions.setError(null);
     } catch (error) {
-      actions.setError(error.message);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      actions.setError(errorMessage);
     } finally {
       setIsSyncing(false);
     }
   };
 
-  const handleEmailClick = (email) => {
+  const handleEmailClick = (email: Email): void => {
     setSelectedEmail(email);
     if (!email.read) {
       setEmails(prev => prev.map(e => 
@@ -93,7 +106,7 @@ export default function EmailsPage() {
     return matchesFilter && matchesSearch;
   });
 
-  const getPriorityColor = (priority) => {
+  const getPriorityColor = (priority: 'high' | 'medium' | 'low'): string => {
     switch (priority) {
       case 'high': return 'text-red-600';
       case 'medium': return 'text-yellow-600';

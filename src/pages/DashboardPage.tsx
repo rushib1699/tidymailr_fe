@@ -3,12 +3,14 @@ import { useApp } from '../context/AppContext';
 import { mail } from '../services/api';
 import MailSyncList from '../components/MailSyncList';
 
+type SyncStatus = 'idle' | 'syncing' | 'completed' | 'error';
+
 export default function DashboardPage() {
   const { state, actions } = useApp();
-  const [syncStatus, setSyncStatus] = useState('idle'); // idle, syncing, completed, error
+  const [syncStatus, setSyncStatus] = useState<SyncStatus>('idle');
 
   useEffect(() => {
-    const syncEmails = async () => {
+    const syncEmails = async (): Promise<void> => {
       setSyncStatus('syncing');
       actions.setLoading(true);
       actions.setError(null);
@@ -18,7 +20,8 @@ export default function DashboardPage() {
         actions.setEmails(response.emails || []);
         setSyncStatus('completed');
       } catch (error) {
-        actions.setError(`Email sync failed: ${error.message}`);
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        actions.setError(`Email sync failed: ${errorMessage}`);
         setSyncStatus('error');
       } finally {
         actions.setLoading(false);
@@ -28,7 +31,7 @@ export default function DashboardPage() {
     syncEmails();
   }, [actions]);
 
-  const handleRefreshSync = async () => {
+  const handleRefreshSync = async (): Promise<void> => {
     setSyncStatus('syncing');
     actions.setLoading(true);
     actions.setError(null);
@@ -38,7 +41,8 @@ export default function DashboardPage() {
       actions.setEmails(response.emails || []);
       setSyncStatus('completed');
     } catch (error) {
-      actions.setError(`Email sync failed: ${error.message}`);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      actions.setError(`Email sync failed: ${errorMessage}`);
       setSyncStatus('error');
     } finally {
       actions.setLoading(false);

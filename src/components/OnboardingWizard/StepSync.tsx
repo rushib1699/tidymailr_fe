@@ -2,12 +2,18 @@ import { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { mail } from '../../services/api';
 
+interface SyncStatus {
+  type: 'success' | 'error';
+  message: string;
+  details?: any;
+}
+
 export default function StepSync() {
   const { state, actions } = useApp();
   const [isLoading, setIsLoading] = useState(false);
-  const [syncStatus, setSyncStatus] = useState(null);
+  const [syncStatus, setSyncStatus] = useState<SyncStatus | null>(null);
 
-  const handleSync = async () => {
+  const handleSync = async (): Promise<void> => {
     setIsLoading(true);
     actions.setError(null);
     setSyncStatus(null);
@@ -16,7 +22,7 @@ export default function StepSync() {
       const response = await mail.sync({
         filters: state.onboardingData.filters,
         workingHours: state.onboardingData.workingHours,
-        calendar: state.onboardingData.calendar,
+        calendar: state.onboardingData.selectedCalendar,
       });
       
       setSyncStatus({
@@ -25,11 +31,12 @@ export default function StepSync() {
         details: response
       });
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
       setSyncStatus({
         type: 'error',
-        message: error.message
+        message: errorMessage
       });
-      actions.setError(error.message);
+      actions.setError(errorMessage);
     } finally {
       setIsLoading(false);
     }

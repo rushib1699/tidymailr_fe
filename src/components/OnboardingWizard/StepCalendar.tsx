@@ -2,9 +2,17 @@ import { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
 import { calendar } from '../../services/api';
 
+interface Calendar {
+  id: string;
+  name?: string;
+  summary?: string;
+  description?: string;
+  primary?: boolean;
+}
+
 export default function StepCalendar() {
   const { state, actions } = useApp();
-  const [calendars, setCalendars] = useState([]);
+  const [calendars, setCalendars] = useState<Calendar[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -15,11 +23,12 @@ export default function StepCalendar() {
         setCalendars(data.calendars || []);
         
         if (!state.onboardingData.selectedCalendar && data.calendars?.length > 0) {
-          const primaryCalendar = data.calendars.find(cal => cal.primary) || data.calendars[0];
+          const primaryCalendar = data.calendars.find((cal: Calendar) => cal.primary) || data.calendars[0];
           actions.setSelectedCalendar(primaryCalendar);
         }
       } catch (error) {
-        actions.setError(`Failed to load calendars: ${error.message}`);
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        actions.setError(`Failed to load calendars: ${errorMessage}`);
       } finally {
         setLoading(false);
       }
@@ -28,7 +37,7 @@ export default function StepCalendar() {
     fetchCalendars();
   }, [actions, state.onboardingData.selectedCalendar]);
 
-  const handleCalendarSelect = (selectedCalendar) => {
+  const handleCalendarSelect = (selectedCalendar: Calendar): void => {
     actions.setSelectedCalendar(selectedCalendar);
   };
 

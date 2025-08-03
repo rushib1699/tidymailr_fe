@@ -1,15 +1,37 @@
 import { useState } from 'react';
 
-export default function TaskCard({ task, onUpdate, onDelete }) {
+interface Task {
+  id: string;
+  title: string;
+  description?: string;
+  priority: 'high' | 'medium' | 'low';
+  status: 'pending' | 'in-progress' | 'completed';
+  createdAt?: string;
+}
+
+interface TaskCardProps {
+  task: Task;
+  onUpdate: (id: string, updates: Partial<Task>) => void;
+  onDelete: (id: string) => void;
+}
+
+interface EditedTask {
+  title: string;
+  description: string;
+  priority: 'high' | 'medium' | 'low';
+  status: 'pending' | 'in-progress' | 'completed';
+}
+
+export default function TaskCard({ task, onUpdate, onDelete }: TaskCardProps) {
   const [isEditing, setIsEditing] = useState(false);
-  const [editedTask, setEditedTask] = useState({
+  const [editedTask, setEditedTask] = useState<EditedTask>({
     title: task.title,
-    description: task.description,
+    description: task.description || '',
     priority: task.priority,
     status: task.status
   });
 
-  const priorityColors = {
+  const priorityColors: Record<string, { bg: string; border: string; text: string; badge: string }> = {
     high: {
       bg: 'bg-red-50',
       border: 'border-red-200',
@@ -30,7 +52,7 @@ export default function TaskCard({ task, onUpdate, onDelete }) {
     }
   };
 
-  const statusColors = {
+  const statusColors: Record<string, string> = {
     pending: 'bg-gray-100 text-gray-800',
     'in-progress': 'bg-blue-100 text-blue-800',
     completed: 'bg-green-100 text-green-800'
@@ -38,22 +60,22 @@ export default function TaskCard({ task, onUpdate, onDelete }) {
 
   const colors = priorityColors[task.priority] || priorityColors.medium;
 
-  const handleSave = () => {
+  const handleSave = (): void => {
     onUpdate(task.id, editedTask);
     setIsEditing(false);
   };
 
-  const handleCancel = () => {
+  const handleCancel = (): void => {
     setEditedTask({
       title: task.title,
-      description: task.description,
+      description: task.description || '',
       priority: task.priority,
       status: task.status
     });
     setIsEditing(false);
   };
 
-  const handleStatusChange = (newStatus) => {
+  const handleStatusChange = (newStatus: 'pending' | 'in-progress' | 'completed'): void => {
     onUpdate(task.id, { status: newStatus });
   };
 
@@ -68,17 +90,17 @@ export default function TaskCard({ task, onUpdate, onDelete }) {
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
             placeholder="Task title"
           />
-          <textarea
-            value={editedTask.description}
-            onChange={(e) => setEditedTask({ ...editedTask, description: e.target.value })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
-            rows="3"
-            placeholder="Task description"
-          />
+                      <textarea
+              value={editedTask.description}
+              onChange={(e) => setEditedTask({ ...editedTask, description: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+              rows={3}
+              placeholder="Task description"
+            />
           <div className="flex space-x-2">
             <select
               value={editedTask.priority}
-              onChange={(e) => setEditedTask({ ...editedTask, priority: e.target.value })}
+              onChange={(e) => setEditedTask({ ...editedTask, priority: e.target.value as 'high' | 'medium' | 'low' })}
               className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
             >
               <option value="high">High Priority</option>
@@ -87,7 +109,7 @@ export default function TaskCard({ task, onUpdate, onDelete }) {
             </select>
             <select
               value={editedTask.status}
-              onChange={(e) => setEditedTask({ ...editedTask, status: e.target.value })}
+              onChange={(e) => setEditedTask({ ...editedTask, status: e.target.value as 'pending' | 'in-progress' | 'completed' })}
               className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
             >
               <option value="pending">Pending</option>

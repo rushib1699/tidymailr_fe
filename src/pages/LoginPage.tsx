@@ -4,12 +4,17 @@ import { useApp } from '../context/AppContext';
 import { auth } from '../services/api';
 import AuthForm from '../components/AuthForm';
 
+interface Credentials {
+  email: string;
+  password: string;
+}
+
 export default function LoginPage() {
   const navigate = useNavigate();
   const { actions } = useApp();
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleLogin = async (credentials) => {
+  const handleLogin = async (credentials: Credentials): Promise<void> => {
     setIsLoading(true);
     actions.setError(null);
 
@@ -18,7 +23,8 @@ export default function LoginPage() {
       actions.setUser(response.user || { email: credentials.email });
       navigate('/dashboard');
     } catch (error) {
-      actions.setError(error.message);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      actions.setError(errorMessage);
     } finally {
       setIsLoading(false);
     }

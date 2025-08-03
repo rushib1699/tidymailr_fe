@@ -1,8 +1,75 @@
-import { createContext, useContext, useReducer, useEffect } from 'react';
+import { createContext, useContext, useReducer, useEffect, ReactNode } from 'react';
 
-const AppContext = createContext();
+interface User {
+  id: string;
+  email: string;
+  name?: string;
+}
 
-const initialState = {
+interface ConnectedAccounts {
+  workspace: boolean;
+  personal: boolean;
+}
+
+export interface OnboardingFilters {
+  important: boolean;
+  promotion: boolean;
+  social: boolean;
+  forum: boolean;
+  updates: boolean;
+}
+
+interface WorkingHours {
+  start: string;
+  end: string;
+}
+
+interface Calendar {
+  id: string;
+  name?: string;
+  summary?: string;
+  description?: string;
+  primary?: boolean;
+}
+
+interface OnboardingData {
+  filters: OnboardingFilters;
+  selectedCalendar: Calendar | null;
+  workingHours: WorkingHours;
+  break: WorkingHours;
+}
+
+interface AppState {
+  user: User | null;
+  isAuthenticated: boolean;
+  connectedAccounts: ConnectedAccounts;
+  onboardingData: OnboardingData;
+  emails: any[];
+  isLoading: boolean;
+  error: string | null;
+}
+
+interface AppActions {
+  setUser: (user: User | null) => void;
+  setConnectedAccount: (type: 'workspace' | 'personal', connected: boolean) => void;
+  updateOnboardingFilters: (filters: Partial<OnboardingFilters>) => void;
+  setSelectedCalendar: (calendar: Calendar | null) => void;
+  updateWorkingHours: (hours: Partial<WorkingHours>) => void;
+  updateBreakHours: (hours: Partial<WorkingHours>) => void;
+  setEmails: (emails: any[]) => void;
+  setLoading: (loading: boolean) => void;
+  setError: (error: string | null) => void;
+  resetState: () => void;
+}
+
+interface AppContextType {
+  state: AppState;
+  actions: AppActions;
+}
+
+const AppContext = createContext<AppContextType | null>(null);
+
+const initialState: AppState = {
   user: null,
   isAuthenticated: false,
   connectedAccounts: {
@@ -32,7 +99,19 @@ const initialState = {
   error: null,
 };
 
-function appReducer(state, action) {
+type AppAction =
+  | { type: 'SET_USER'; payload: User | null }
+  | { type: 'SET_CONNECTED_ACCOUNT'; payload: { type: 'workspace' | 'personal'; connected: boolean } }
+  | { type: 'UPDATE_ONBOARDING_FILTERS'; payload: Partial<OnboardingFilters> }
+  | { type: 'SET_SELECTED_CALENDAR'; payload: Calendar | null }
+  | { type: 'UPDATE_WORKING_HOURS'; payload: Partial<WorkingHours> }
+  | { type: 'UPDATE_BREAK_HOURS'; payload: Partial<WorkingHours> }
+  | { type: 'SET_EMAILS'; payload: any[] }
+  | { type: 'SET_LOADING'; payload: boolean }
+  | { type: 'SET_ERROR'; payload: string | null }
+  | { type: 'RESET_STATE' };
+
+function appReducer(state: AppState, action: AppAction): AppState {
   switch (action.type) {
     case 'SET_USER':
       return {
@@ -111,7 +190,11 @@ function appReducer(state, action) {
   }
 }
 
-export function AppProvider({ children }) {
+interface AppProviderProps {
+  children: ReactNode;
+}
+
+export function AppProvider({ children }: AppProviderProps) {
   const [state, dispatch] = useReducer(appReducer, initialState);
 
   useEffect(() => {
@@ -122,7 +205,9 @@ export function AppProvider({ children }) {
         dispatch({ type: 'SET_USER', payload: parsedState.user });
         if (parsedState.connectedAccounts) {
           Object.entries(parsedState.connectedAccounts).forEach(([type, connected]) => {
-            dispatch({ type: 'SET_CONNECTED_ACCOUNT', payload: { type, connected } });
+            if (type === 'workspace' || type === 'personal') {
+              dispatch({ type: 'SET_CONNECTED_ACCOUNT', payload: { type, connected: Boolean(connected) } });
+            }
           });
         }
         if (parsedState.onboardingData) {
@@ -154,16 +239,16 @@ export function AppProvider({ children }) {
     localStorage.setItem('appState', JSON.stringify(stateToSave));
   }, [state.user, state.connectedAccounts, state.onboardingData]);
 
-  const actions = {
-    setUser: (user) => dispatch({ type: 'SET_USER', payload: user }),
-    setConnectedAccount: (type, connected) => dispatch({ type: 'SET_CONNECTED_ACCOUNT', payload: { type, connected } }),
-    updateOnboardingFilters: (filters) => dispatch({ type: 'UPDATE_ONBOARDING_FILTERS', payload: filters }),
-    setSelectedCalendar: (calendar) => dispatch({ type: 'SET_SELECTED_CALENDAR', payload: calendar }),
-    updateWorkingHours: (hours) => dispatch({ type: 'UPDATE_WORKING_HOURS', payload: hours }),
-    updateBreakHours: (hours) => dispatch({ type: 'UPDATE_BREAK_HOURS', payload: hours }),
-    setEmails: (emails) => dispatch({ type: 'SET_EMAILS', payload: emails }),
-    setLoading: (loading) => dispatch({ type: 'SET_LOADING', payload: loading }),
-    setError: (error) => dispatch({ type: 'SET_ERROR', payload: error }),
+  const actions: AppActions = {
+    setUser: (user: User | null) => dispatch({ type: 'SET_USER', payload: user }),
+    setConnectedAccount: (type: 'workspace' | 'personal', connected: boolean) => dispatch({ type: 'SET_CONNECTED_ACCOUNT', payload: { type, connected } }),
+    updateOnboardingFilters: (filters: Partial<OnboardingFilters>) => dispatch({ type: 'UPDATE_ONBOARDING_FILTERS', payload: filters }),
+    setSelectedCalendar: (calendar: Calendar | null) => dispatch({ type: 'SET_SELECTED_CALENDAR', payload: calendar }),
+    updateWorkingHours: (hours: Partial<WorkingHours>) => dispatch({ type: 'UPDATE_WORKING_HOURS', payload: hours }),
+    updateBreakHours: (hours: Partial<WorkingHours>) => dispatch({ type: 'UPDATE_BREAK_HOURS', payload: hours }),
+    setEmails: (emails: any[]) => dispatch({ type: 'SET_EMAILS', payload: emails }),
+    setLoading: (loading: boolean) => dispatch({ type: 'SET_LOADING', payload: loading }),
+    setError: (error: string | null) => dispatch({ type: 'SET_ERROR', payload: error }),
     resetState: () => dispatch({ type: 'RESET_STATE' }),
   };
 
@@ -174,9 +259,9 @@ export function AppProvider({ children }) {
   );
 }
 
-export function useApp() {
+export function useApp(): AppContextType {
   const context = useContext(AppContext);
-  if (context === undefined) {
+  if (context === undefined || context === null) {
     throw new Error('useApp must be used within an AppProvider');
   }
   return context;

@@ -2,11 +2,20 @@ import { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { auth } from '../services/api';
 
+interface LoadingState {
+  [key: string]: boolean;
+}
+
+interface ConnectionButtonProps {
+  type: 'workspace' | 'personal';
+  label: string;
+}
+
 export default function GoogleConnect() {
   const { state, actions } = useApp();
-  const [loading, setLoading] = useState({});
+  const [loading, setLoading] = useState<LoadingState>({});
 
-  const handleConnect = async (type) => {
+  const handleConnect = async (type: 'workspace' | 'personal') => {
     setLoading(prev => ({ ...prev, [type]: true }));
     actions.setError(null);
 
@@ -14,13 +23,14 @@ export default function GoogleConnect() {
       await auth.connectGoogle({ type });
       actions.setConnectedAccount(type, true);
     } catch (error) {
-      actions.setError(`Failed to connect ${type} account: ${error.message}`);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      actions.setError(`Failed to connect ${type} account: ${errorMessage}`);
     } finally {
       setLoading(prev => ({ ...prev, [type]: false }));
     }
   };
 
-  const ConnectionButton = ({ type, label }) => {
+  const ConnectionButton = ({ type, label }: ConnectionButtonProps) => {
     const isConnected = state.connectedAccounts[type];
     const isLoading = loading[type];
 

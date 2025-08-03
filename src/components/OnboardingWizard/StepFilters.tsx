@@ -1,15 +1,22 @@
 import { useApp } from '../../context/AppContext';
+import { OnboardingFilters } from '../../context/AppContext';
+
+interface FilterOption {
+  key: keyof OnboardingFilters;
+  label: string;
+  description: string;
+}
 
 export default function StepFilters() {
   const { state, actions } = useApp();
 
-  const handleToggle = (filterName) => {
+  const handleToggle = (filterName: keyof OnboardingFilters): void => {
     actions.updateOnboardingFilters({
       [filterName]: !state.onboardingData.filters[filterName],
     });
   };
 
-  const filterOptions = [
+  const filterOptions: FilterOption[] = [
     { key: 'important', label: 'Important', description: 'High priority emails' },
     { key: 'promotion', label: 'Promotion', description: 'Marketing and promotional emails' },
     { key: 'social', label: 'Social', description: 'Social media notifications' },

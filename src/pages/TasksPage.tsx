@@ -3,16 +3,32 @@ import { useApp } from '../context/AppContext';
 import { tasks } from '../services/api';
 import TaskCard from '../components/TaskCard';
 
+interface Task {
+  id: string;
+  title: string;
+  description?: string;
+  priority: 'high' | 'medium' | 'low';
+  status: 'pending' | 'in-progress' | 'completed';
+  createdAt?: string;
+}
+
+interface NewTask {
+  title: string;
+  description: string;
+  priority: 'high' | 'medium' | 'low';
+  status: 'pending' | 'in-progress' | 'completed';
+}
+
 export default function TasksPage() {
   const { actions } = useApp();
-  const [allTasks, setAllTasks] = useState([]);
-  const [filteredTasks, setFilteredTasks] = useState([]);
+  const [allTasks, setAllTasks] = useState<Task[]>([]);
+  const [filteredTasks, setFilteredTasks] = useState<Task[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedPriority, setSelectedPriority] = useState('all');
   const [selectedStatus, setSelectedStatus] = useState('all');
   const [sortBy, setSortBy] = useState('priority');
   const [showCreateForm, setShowCreateForm] = useState(false);
-  const [newTask, setNewTask] = useState({
+  const [newTask, setNewTask] = useState<NewTask>({
     title: '',
     description: '',
     priority: 'medium',
@@ -27,18 +43,19 @@ export default function TasksPage() {
     filterAndSortTasks();
   }, [allTasks, selectedPriority, selectedStatus, sortBy]);
 
-  const loadTasks = async () => {
+  const loadTasks = async (): Promise<void> => {
     try {
       const response = await tasks.getTasks();
       setAllTasks(response.tasks || []);
     } catch (error) {
-      actions.setError(error.message);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      actions.setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const filterAndSortTasks = () => {
+  const filterAndSortTasks = (): void => {
     let filtered = [...allTasks];
 
     // Filter by priority
@@ -57,7 +74,7 @@ export default function TasksPage() {
         const priorityOrder = { high: 3, medium: 2, low: 1 };
         return priorityOrder[b.priority] - priorityOrder[a.priority];
       } else if (sortBy === 'created') {
-        return new Date(b.createdAt) - new Date(a.createdAt);
+        return new Date(b.createdAt || '').getTime() - new Date(a.createdAt || '').getTime();
       } else if (sortBy === 'title') {
         return a.title.localeCompare(b.title);
       }
@@ -67,7 +84,7 @@ export default function TasksPage() {
     setFilteredTasks(filtered);
   };
 
-  const handleCreateTask = async (e) => {
+  const handleCreateTask = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault();
     if (!newTask.title.trim()) return;
 
@@ -81,11 +98,12 @@ export default function TasksPage() {
       setShowCreateForm(false);
       actions.setError(null);
     } catch (error) {
-      actions.setError(error.message);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      actions.setError(errorMessage);
     }
   };
 
-  const handleUpdateTask = async (taskId, updates) => {
+  const handleUpdateTask = async (taskId: string, updates: Partial<Task>): Promise<void> => {
     try {
       await tasks.updateTask(taskId, updates);
       setAllTasks(prev => prev.map(task => 
@@ -93,11 +111,12 @@ export default function TasksPage() {
       ));
       actions.setError(null);
     } catch (error) {
-      actions.setError(error.message);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      actions.setError(errorMessage);
     }
   };
 
-  const handleDeleteTask = async (taskId) => {
+  const handleDeleteTask = async (taskId: string): Promise<void> => {
     if (!confirm('Are you sure you want to delete this task?')) return;
 
     try {
@@ -105,11 +124,12 @@ export default function TasksPage() {
       setAllTasks(prev => prev.filter(task => task.id !== taskId));
       actions.setError(null);
     } catch (error) {
-      actions.setError(error.message);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      actions.setError(errorMessage);
     }
   };
 
-  const getTaskCounts = () => {
+  const getTaskCounts = (): Record<string, number> => {
     const counts = {
       all: allTasks.length,
       high: allTasks.filter(t => t.priority === 'high').length,
@@ -253,7 +273,7 @@ export default function TasksPage() {
                     value={newTask.description}
                     onChange={(e) => setNewTask({ ...newTask, description: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
-                    rows="3"
+                    rows={3}
                     placeholder="Enter task description (optional)"
                   />
                 </div>
@@ -262,7 +282,7 @@ export default function TasksPage() {
                     <label className="block text-sm font-medium text-gray-700 mb-1">Priority</label>
                     <select
                       value={newTask.priority}
-                      onChange={(e) => setNewTask({ ...newTask, priority: e.target.value })}
+                      onChange={(e) => setNewTask({ ...newTask, priority: e.target.value as 'high' | 'medium' | 'low' })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
                     >
                       <option value="high">High</option>
@@ -274,7 +294,7 @@ export default function TasksPage() {
                     <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
                     <select
                       value={newTask.status}
-                      onChange={(e) => setNewTask({ ...newTask, status: e.target.value })}
+                      onChange={(e) => setNewTask({ ...newTask, status: e.target.value as 'pending' | 'in-progress' | 'completed' })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
                     >
                       <option value="pending">Pending</option>
