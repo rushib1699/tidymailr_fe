@@ -1,4 +1,37 @@
 import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import {
+  Loader2,
+  Edit2,
+  Trash2,
+  Clock,
+  Zap,
+  CheckCircle,
+  Calendar,
+} from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { cn } from '@/lib/utils';
 
 interface Task {
   id: string;
@@ -11,8 +44,8 @@ interface Task {
 
 interface TaskCardProps {
   task: Task;
-  onUpdate: (id: string, updates: Partial<Task>) => void;
-  onDelete: (id: string) => void;
+  onUpdate: (id: string, updates: Partial<Task>) => Promise<void>;
+  onDelete: (id: string) => Promise<void>;
 }
 
 interface EditedTask {
@@ -24,6 +57,9 @@ interface EditedTask {
 
 export default function TaskCard({ task, onUpdate, onDelete }: TaskCardProps) {
   const [isEditing, setIsEditing] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [editedTask, setEditedTask] = useState<EditedTask>({
     title: task.title,
     description: task.description || '',
@@ -31,38 +67,46 @@ export default function TaskCard({ task, onUpdate, onDelete }: TaskCardProps) {
     status: task.status
   });
 
-  const priorityColors: Record<string, { bg: string; border: string; text: string; badge: string }> = {
+  const priorityConfig = {
     high: {
-      bg: 'bg-red-50',
-      border: 'border-red-200',
-      text: 'text-red-700',
-      badge: 'bg-red-100 text-red-800'
+      variant: 'destructive' as const,
+      className: 'bg-red-100 text-red-800 hover:bg-red-100',
     },
     medium: {
-      bg: 'bg-yellow-50',
-      border: 'border-yellow-200',
-      text: 'text-yellow-700',
-      badge: 'bg-yellow-100 text-yellow-800'
+      variant: 'secondary' as const,
+      className: 'bg-yellow-100 text-yellow-800 hover:bg-yellow-100',
     },
     low: {
-      bg: 'bg-green-50',
-      border: 'border-green-200',
-      text: 'text-green-700',
-      badge: 'bg-green-100 text-green-800'
+      variant: 'secondary' as const,
+      className: 'bg-green-100 text-green-800 hover:bg-green-100',
+    },
+  };
+
+  const statusConfig = {
+    pending: {
+      icon: Clock,
+      className: 'bg-gray-100 text-gray-800 hover:bg-gray-100',
+    },
+    'in-progress': {
+      icon: Zap,
+      className: 'bg-blue-100 text-blue-800 hover:bg-blue-100',
+    },
+    completed: {
+      icon: CheckCircle,
+      className: 'bg-green-100 text-green-800 hover:bg-green-100',
+    },
+  };
+
+  const handleSave = async (): Promise<void> => {
+    if (isUpdating) return;
+    
+    setIsUpdating(true);
+    try {
+      await onUpdate(task.id, editedTask);
+      setIsEditing(false);
+    } finally {
+      setIsUpdating(false);
     }
-  };
-
-  const statusColors: Record<string, string> = {
-    pending: 'bg-gray-100 text-gray-800',
-    'in-progress': 'bg-blue-100 text-blue-800',
-    completed: 'bg-green-100 text-green-800'
-  };
-
-  const colors = priorityColors[task.priority] || priorityColors.medium;
-
-  const handleSave = (): void => {
-    onUpdate(task.id, editedTask);
-    setIsEditing(false);
   };
 
   const handleCancel = (): void => {
@@ -75,143 +119,263 @@ export default function TaskCard({ task, onUpdate, onDelete }: TaskCardProps) {
     setIsEditing(false);
   };
 
-  const handleStatusChange = (newStatus: 'pending' | 'in-progress' | 'completed'): void => {
-    onUpdate(task.id, { status: newStatus });
+  const handleStatusChange = async (newStatus: 'pending' | 'in-progress' | 'completed'): Promise<void> => {
+    if (isUpdating || task.status === newStatus) return;
+    
+    setIsUpdating(true);
+    try {
+      await onUpdate(task.id, { status: newStatus });
+    } finally {
+      setIsUpdating(false);
+    }
   };
+
+  const handleDelete = async (): Promise<void> => {
+    if (isDeleting) return;
+    
+    setIsDeleting(true);
+    try {
+      await onDelete(task.id);
+      setShowDeleteDialog(false);
+    } catch (error) {
+      setIsDeleting(false);
+    }
+  };
+
+  const cardClassName = cn(
+    "h-full transition-all",
+    task.priority === 'high' && "border-red-200",
+    task.priority === 'medium' && "border-yellow-200",
+    task.priority === 'low' && "border-green-200",
+    isDeleting && "opacity-50"
+  );
 
   if (isEditing) {
     return (
-      <div className={`border-2 ${colors.border} ${colors.bg} rounded-lg p-4`}>
-        <div className="space-y-3">
-          <input
-            type="text"
-            value={editedTask.title}
-            onChange={(e) => setEditedTask({ ...editedTask, title: e.target.value })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
-            placeholder="Task title"
-          />
-                      <textarea
-              value={editedTask.description}
-              onChange={(e) => setEditedTask({ ...editedTask, description: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
-              rows={3}
-              placeholder="Task description"
-            />
-          <div className="flex space-x-2">
-            <select
-              value={editedTask.priority}
-              onChange={(e) => setEditedTask({ ...editedTask, priority: e.target.value as 'high' | 'medium' | 'low' })}
-              className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
-            >
-              <option value="high">High Priority</option>
-              <option value="medium">Medium Priority</option>
-              <option value="low">Low Priority</option>
-            </select>
-            <select
-              value={editedTask.status}
-              onChange={(e) => setEditedTask({ ...editedTask, status: e.target.value as 'pending' | 'in-progress' | 'completed' })}
-              className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
-            >
-              <option value="pending">Pending</option>
-              <option value="in-progress">In Progress</option>
-              <option value="completed">Completed</option>
-            </select>
+      <Card className={cardClassName}>
+        <CardHeader className="pb-3">
+          <div className="space-y-3">
+            <div className="space-y-2">
+              <Label htmlFor={`title-${task.id}`}>Title</Label>
+              <Input
+                id={`title-${task.id}`}
+                value={editedTask.title}
+                onChange={(e) => setEditedTask({ ...editedTask, title: e.target.value })}
+                placeholder="Task title"
+                disabled={isUpdating}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor={`desc-${task.id}`}>Description</Label>
+              <Textarea
+                id={`desc-${task.id}`}
+                value={editedTask.description}
+                onChange={(e) => setEditedTask({ ...editedTask, description: e.target.value })}
+                placeholder="Task description"
+                rows={3}
+                disabled={isUpdating}
+              />
+            </div>
           </div>
-          <div className="flex justify-end space-x-2">
-            <button
-              onClick={handleCancel}
-              className="px-3 py-1 text-sm text-gray-600 bg-gray-100 rounded-md hover:bg-gray-200"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={handleSave}
-              className="px-3 py-1 text-sm text-white bg-primary-600 rounded-md hover:bg-primary-700"
-            >
-              Save
-            </button>
+        </CardHeader>
+        <CardContent className="pt-0">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="space-y-2">
+              <Label htmlFor={`priority-${task.id}`}>Priority</Label>
+              <Select
+                value={editedTask.priority}
+                onValueChange={(value) => setEditedTask({ ...editedTask, priority: value as 'high' | 'medium' | 'low' })}
+                disabled={isUpdating}
+              >
+                <SelectTrigger id={`priority-${task.id}`}>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="high">High Priority</SelectItem>
+                  <SelectItem value="medium">Medium Priority</SelectItem>
+                  <SelectItem value="low">Low Priority</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor={`status-${task.id}`}>Status</Label>
+              <Select
+                value={editedTask.status}
+                onValueChange={(value) => setEditedTask({ ...editedTask, status: value as 'pending' | 'in-progress' | 'completed' })}
+                disabled={isUpdating}
+              >
+                <SelectTrigger id={`status-${task.id}`}>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="pending">Pending</SelectItem>
+                  <SelectItem value="in-progress">In Progress</SelectItem>
+                  <SelectItem value="completed">Completed</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
-        </div>
-      </div>
+        </CardContent>
+        <CardFooter className="flex justify-end gap-2 pt-3">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleCancel}
+            disabled={isUpdating}
+          >
+            Cancel
+          </Button>
+          <Button
+            size="sm"
+            onClick={handleSave}
+            disabled={isUpdating || !editedTask.title.trim()}
+          >
+            {isUpdating ? (
+              <>
+                <Loader2 className="mr-2 h-3 w-3 animate-spin" />
+                Saving...
+              </>
+            ) : (
+              'Save'
+            )}
+          </Button>
+        </CardFooter>
+      </Card>
     );
   }
 
   return (
-    <div className={`border-2 ${colors.border} ${colors.bg} rounded-lg p-4 hover:shadow-md transition-shadow`}>
-      <div className="flex justify-between items-start mb-2">
-        <h3 className="text-lg font-semibold text-gray-900 line-clamp-2">{task.title}</h3>
-        <div className="flex items-center space-x-1">
-          <button
-            onClick={() => setIsEditing(true)}
-            className="p-1 text-gray-400 hover:text-gray-600"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-            </svg>
-          </button>
-          <button
-            onClick={() => onDelete(task.id)}
-            className="p-1 text-gray-400 hover:text-red-600"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-            </svg>
-          </button>
-        </div>
-      </div>
-      
-      {task.description && (
-        <p className="text-gray-700 mb-3 line-clamp-3">{task.description}</p>
-      )}
-      
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-2">
-          <span className={`px-2 py-1 text-xs font-medium rounded-full ${colors.badge}`}>
-            {task.priority.charAt(0).toUpperCase() + task.priority.slice(1)} Priority
-          </span>
-          <span className={`px-2 py-1 text-xs font-medium rounded-full ${statusColors[task.status]}`}>
-            {task.status.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}
-          </span>
-        </div>
-        
-        <div className="flex items-center space-x-1">
-          <button
-            onClick={() => handleStatusChange('pending')}
-            className={`p-1 rounded ${task.status === 'pending' ? 'bg-gray-200' : 'hover:bg-gray-100'}`}
-            title="Mark as Pending"
-          >
-            <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-          </button>
-          <button
-            onClick={() => handleStatusChange('in-progress')}
-            className={`p-1 rounded ${task.status === 'in-progress' ? 'bg-blue-200' : 'hover:bg-blue-100'}`}
-            title="Mark as In Progress"
-          >
-            <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-            </svg>
-          </button>
-          <button
-            onClick={() => handleStatusChange('completed')}
-            className={`p-1 rounded ${task.status === 'completed' ? 'bg-green-200' : 'hover:bg-green-100'}`}
-            title="Mark as Completed"
-          >
-            <svg className="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 24 24">
-              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-            </svg>
-          </button>
-        </div>
-      </div>
-      
-      {task.createdAt && (
-        <div className="mt-3 pt-3 border-t border-gray-200">
-          <p className="text-xs text-gray-500">
-            Created: {new Date(task.createdAt).toLocaleDateString()}
-          </p>
-        </div>
-      )}
-    </div>
+    <>
+      <Card className={cardClassName}>
+        <CardHeader className="pb-3">
+          <div className="flex justify-between items-start gap-2">
+            <h3 className="text-base sm:text-lg font-semibold line-clamp-2 flex-1">
+              {task.title}
+            </h3>
+            <div className="flex items-center gap-1 flex-shrink-0">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => setIsEditing(true)}
+                disabled={isUpdating || isDeleting}
+              >
+                <Edit2 className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 hover:text-destructive"
+                onClick={() => setShowDeleteDialog(true)}
+                disabled={isUpdating || isDeleting}
+              >
+                {isDeleting ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Trash2 className="h-4 w-4" />
+                )}
+              </Button>
+            </div>
+          </div>
+          {task.description && (
+            <p className="text-sm text-muted-foreground line-clamp-3 mt-2">
+              {task.description}
+            </p>
+          )}
+        </CardHeader>
+        <CardContent className="pt-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge
+              variant={priorityConfig[task.priority].variant}
+              className={priorityConfig[task.priority].className}
+            >
+              {task.priority.charAt(0).toUpperCase() + task.priority.slice(1)}
+            </Badge>
+            <Badge
+              variant="secondary"
+              className={statusConfig[task.status].className}
+            >
+              {task.status.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+            </Badge>
+          </div>
+        </CardContent>
+        <CardFooter className="flex items-center justify-between pt-3">
+          <div className="flex items-center gap-1">
+            <Button
+              variant={task.status === 'pending' ? 'secondary' : 'ghost'}
+              size="icon"
+              className="h-8 w-8"
+              onClick={() => handleStatusChange('pending')}
+              disabled={isUpdating || isDeleting}
+              title="Mark as Pending"
+            >
+              <Clock className="h-4 w-4" />
+            </Button>
+            <Button
+              variant={task.status === 'in-progress' ? 'secondary' : 'ghost'}
+              size="icon"
+              className="h-8 w-8"
+              onClick={() => handleStatusChange('in-progress')}
+              disabled={isUpdating || isDeleting}
+              title="Mark as In Progress"
+            >
+              <Zap className="h-4 w-4" />
+            </Button>
+            <Button
+              variant={task.status === 'completed' ? 'secondary' : 'ghost'}
+              size="icon"
+              className="h-8 w-8"
+              onClick={() => handleStatusChange('completed')}
+              disabled={isUpdating || isDeleting}
+              title="Mark as Completed"
+            >
+              <CheckCircle className="h-4 w-4" />
+            </Button>
+          </div>
+          
+          {isUpdating && (
+            <span className="text-xs text-muted-foreground flex items-center">
+              <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+              Updating...
+            </span>
+          )}
+          
+          {task.createdAt && (
+            <div className="flex items-center text-xs text-muted-foreground">
+              <Calendar className="mr-1 h-3 w-3" />
+              {new Date(task.createdAt).toLocaleDateString()}
+            </div>
+          )}
+        </CardFooter>
+      </Card>
+
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Task</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this task? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              disabled={isDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                'Delete'
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }
