@@ -25,7 +25,15 @@ export default function LoginPage() {
 
     try {
       const response = await auth.signIn(credentials);
-      actions.setUser(response.user || { email: credentials.email });
+      const userPayload = (response && (response as any).user) ? (response as any).user : response;
+      actions.setUser({
+        id: userPayload?.id,
+        name: userPayload?.name,
+        username: userPayload?.username,
+        email: userPayload?.email ?? credentials.email,
+        google_email_personal: userPayload?.google_email_personal,
+        google_email_business: userPayload?.google_email_business, 
+      });
       navigate('/dashboard');
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';

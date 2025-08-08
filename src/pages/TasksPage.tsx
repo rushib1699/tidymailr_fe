@@ -20,7 +20,7 @@ interface NewTask {
 }
 
 export default function TasksPage() {
-  const { actions } = useApp();
+  const { state, actions } = useApp();
   const [allTasks, setAllTasks] = useState<Task[]>([]);
   const [filteredTasks, setFilteredTasks] = useState<Task[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -45,7 +45,11 @@ export default function TasksPage() {
 
   const loadTasks = async (): Promise<void> => {
     try {
-      const response = await tasks.getTasks();
+      if (!state.user?.id) {
+        setAllTasks([]);
+        return;
+      }
+      const response = await tasks.getTasks(state.user.id);
       setAllTasks(response.tasks || []);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
@@ -89,10 +93,17 @@ export default function TasksPage() {
     if (!newTask.title.trim()) return;
 
     try {
-      const createdTask = await tasks.createTask({
-        ...newTask,
-        createdAt: new Date().toISOString()
-      });
+      console.log("state.user", state.user);
+      if (!state.user?.id) {
+        throw new Error('User not found');
+      }
+      const createdTask = await tasks.createTask(
+        state.user.id,
+        {
+          ...newTask,
+          createdAt: new Date().toISOString(),
+        }
+      );
       setAllTasks(prev => [createdTask, ...prev]);
       setNewTask({ title: '', description: '', priority: 'medium', status: 'pending' });
       setShowCreateForm(false);
@@ -105,9 +116,13 @@ export default function TasksPage() {
 
   const handleUpdateTask = async (taskId: string, updates: Partial<Task>): Promise<void> => {
     try {
-      await tasks.updateTask(taskId, updates);
+      if (!state.user?.id) {
+        throw new Error('User not found');
+      }
+
+      const updatedTask = await tasks.updateTask(state.user.id, taskId, updates);
       setAllTasks(prev => prev.map(task => 
-        task.id === taskId ? { ...task, ...updates } : task
+        task.id === taskId ? updatedTask : task
       ));
       actions.setError(null);
     } catch (error) {
@@ -120,7 +135,11 @@ export default function TasksPage() {
     if (!confirm('Are you sure you want to delete this task?')) return;
 
     try {
-      await tasks.deleteTask(taskId);
+      if (!state.user?.id) {
+        throw new Error('User not found');
+      }
+      
+      await tasks.deleteTask(state.user.id, taskId);
       setAllTasks(prev => prev.filter(task => task.id !== taskId));
       actions.setError(null);
     } catch (error) {

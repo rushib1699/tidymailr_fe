@@ -1,9 +1,14 @@
 import { createContext, useContext, useReducer, useEffect, ReactNode } from 'react';
 
 interface User {
-  id: string;
+  id: number | string;
   email: string;
   name?: string;
+  username?: string;
+  token?: string;
+  google_email_personal?: string;
+  google_email_business?: string;
+  isLoggedIn?: boolean;
 }
 
 interface ConnectedAccounts {
