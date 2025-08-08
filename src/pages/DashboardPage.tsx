@@ -9,27 +9,27 @@ export default function DashboardPage() {
   const { state, actions } = useApp();
   const [syncStatus, setSyncStatus] = useState<SyncStatus>('idle');
 
-  useEffect(() => {
-    const syncEmails = async (): Promise<void> => {
-      setSyncStatus('syncing');
-      actions.setLoading(true);
-      actions.setError(null);
+  // useEffect(() => {
+  //   const syncEmails = async (): Promise<void> => {
+  //     setSyncStatus('syncing');
+  //     actions.setLoading(true);
+  //     actions.setError(null);
 
-      try {
-        const response = await mail.sync({ limit: 200 });
-        actions.setEmails(response.emails || []);
-        setSyncStatus('completed');
-      } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-        actions.setError(`Email sync failed: ${errorMessage}`);
-        setSyncStatus('error');
-      } finally {
-        actions.setLoading(false);
-      }
-    };
+  //     try {
+  //       const response = await mail.sync({ limit: 200 });
+  //       actions.setEmails(response.emails || []);
+  //       setSyncStatus('completed');
+  //     } catch (error) {
+  //       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+  //       actions.setError(`Email sync failed: ${errorMessage}`);
+  //       setSyncStatus('error');
+  //     } finally {
+  //       actions.setLoading(false);
+  //     }
+  //   };
 
-    syncEmails();
-  }, [actions]);
+  //   syncEmails();
+  // }, [actions]);
 
   const handleRefreshSync = async (): Promise<void> => {
     setSyncStatus('syncing');

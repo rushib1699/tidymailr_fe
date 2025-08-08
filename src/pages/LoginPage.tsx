@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, Navigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { auth } from '../services/api';
 import AuthForm from '../components/AuthForm';
@@ -11,8 +11,13 @@ interface Credentials {
 
 export default function LoginPage() {
   const navigate = useNavigate();
-  const { actions } = useApp();
+  const { state, actions } = useApp();
   const [isLoading, setIsLoading] = useState(false);
+
+  console.log("state.isAuthenticated", state.isAuthenticated);
+  if (state.isAuthenticated) {
+    return <Navigate to="/dashboard" replace />;
+  }
 
   const handleLogin = async (credentials: Credentials): Promise<void> => {
     setIsLoading(true);

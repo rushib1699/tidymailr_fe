@@ -1,4 +1,5 @@
-const API_BASE_URL = 'http://localhost:3001/api';
+const AUTH_BASE_URL = 'https://api.tidymailr.com';
+const API_BASE_URL = 'https://api.tidymailr.com/api';
 
 interface Credentials {
   email: string;
@@ -30,7 +31,7 @@ interface TaskData {
 
 export const auth = {
   async signUp(credentials: Credentials) {
-    const response = await fetch(`${API_BASE_URL}/auth/signup`, {
+    const response = await fetch(`${AUTH_BASE_URL}/auth/signup`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(credentials)
@@ -44,7 +45,7 @@ export const auth = {
   },
 
   async signIn(credentials: Credentials) {
-    const response = await fetch(`${API_BASE_URL}/auth/signin`, {
+    const response = await fetch(`${AUTH_BASE_URL}/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(credentials)

@@ -8,6 +8,7 @@ import ProfilePage from './pages/ProfilePage';
 import TasksPage from './pages/TasksPage';
 import EmailsPage from './pages/EmailsPage';
 import Layout from './components/Layout';
+import ProtectedRoute from './components/ProtectedRoute';
 
 export const router = createBrowserRouter([
   {
@@ -25,41 +26,51 @@ export const router = createBrowserRouter([
   {
     path: '/onboarding',
     element: (
-      <Layout>
-        <OnboardingPage />
-      </Layout>
+      <ProtectedRoute>
+        <Layout>
+          <OnboardingPage />
+        </Layout>
+      </ProtectedRoute>
     ),
   },
   {
     path: '/dashboard',
     element: (
-      <Layout>
-        <DashboardPage />
-      </Layout>
+      <ProtectedRoute>
+        <Layout>
+          <DashboardPage />
+        </Layout>
+      </ProtectedRoute>
     ),
   },
   {
     path: '/emails',
     element: (
-      <Layout>
-        <EmailsPage />
-      </Layout>
+      <ProtectedRoute>
+        <Layout>
+          <EmailsPage />
+        </Layout>
+      </ProtectedRoute>
     ),
   },
   {
     path: '/profile',
     element: (
-      <Layout>
-        <ProfilePage />
-      </Layout>
+      <ProtectedRoute>
+        <Layout>
+          <ProfilePage />
+        </Layout>
+      </ProtectedRoute>
     ),
   },
   {
     path: '/tasks',
     element: (
-      <Layout>
-        <TasksPage />
-      </Layout>
+      <ProtectedRoute>
+        <Layout>
+          <TasksPage />
+        </Layout>
+      </ProtectedRoute>
     ),
   },
   {

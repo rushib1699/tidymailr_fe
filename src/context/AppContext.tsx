@@ -195,40 +195,44 @@ interface AppProviderProps {
 }
 
 export function AppProvider({ children }: AppProviderProps) {
-  const [state, dispatch] = useReducer(appReducer, initialState);
-
-  useEffect(() => {
-    const savedState = localStorage.getItem('appState');
-    if (savedState) {
-      try {
-        const parsedState = JSON.parse(savedState);
-        dispatch({ type: 'SET_USER', payload: parsedState.user });
-        if (parsedState.connectedAccounts) {
-          Object.entries(parsedState.connectedAccounts).forEach(([type, connected]) => {
-            if (type === 'workspace' || type === 'personal') {
-              dispatch({ type: 'SET_CONNECTED_ACCOUNT', payload: { type, connected: Boolean(connected) } });
-            }
-          });
-        }
-        if (parsedState.onboardingData) {
-          if (parsedState.onboardingData.filters) {
-            dispatch({ type: 'UPDATE_ONBOARDING_FILTERS', payload: parsedState.onboardingData.filters });
-          }
-          if (parsedState.onboardingData.selectedCalendar) {
-            dispatch({ type: 'SET_SELECTED_CALENDAR', payload: parsedState.onboardingData.selectedCalendar });
-          }
-          if (parsedState.onboardingData.workingHours) {
-            dispatch({ type: 'UPDATE_WORKING_HOURS', payload: parsedState.onboardingData.workingHours });
-          }
-          if (parsedState.onboardingData.break) {
-            dispatch({ type: 'UPDATE_BREAK_HOURS', payload: parsedState.onboardingData.break });
-          }
-        }
-      } catch (error) {
-        console.error('Failed to parse saved state:', error);
+  // Lazy initializer to hydrate synchronously from localStorage
+  const [state, dispatch] = useReducer(appReducer, undefined as unknown as AppState, () => {
+    try {
+      const savedStateRaw = localStorage.getItem('appState');
+      if (!savedStateRaw) {
+        return initialState;
       }
+      const saved = JSON.parse(savedStateRaw) as Partial<Pick<AppState, 'user' | 'connectedAccounts' | 'onboardingData'>>;
+      const hydrated: AppState = {
+        ...initialState,
+        user: saved.user ?? null,
+        isAuthenticated: !!saved.user,
+        connectedAccounts: {
+          workspace: saved.connectedAccounts?.workspace ?? initialState.connectedAccounts.workspace,
+          personal: saved.connectedAccounts?.personal ?? initialState.connectedAccounts.personal,
+        },
+        onboardingData: {
+          filters: {
+            ...initialState.onboardingData.filters,
+            ...(saved.onboardingData?.filters ?? {}),
+          },
+          selectedCalendar: saved.onboardingData?.selectedCalendar ?? initialState.onboardingData.selectedCalendar,
+          workingHours: {
+            ...initialState.onboardingData.workingHours,
+            ...(saved.onboardingData?.workingHours ?? {}),
+          },
+          break: {
+            ...initialState.onboardingData.break,
+            ...(saved.onboardingData?.break ?? {}),
+          },
+        },
+      };
+      return hydrated;
+    } catch (error) {
+      console.error('Failed to hydrate state from localStorage:', error);
+      return initialState;
     }
-  }, []);
+  });
 
   useEffect(() => {
     const stateToSave = {
