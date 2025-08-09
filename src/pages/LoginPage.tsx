@@ -14,7 +14,6 @@ export default function LoginPage() {
   const { state, actions } = useApp();
   const [isLoading, setIsLoading] = useState(false);
 
-  console.log("state.isAuthenticated", state.isAuthenticated);
   if (state.isAuthenticated) {
     return <Navigate to="/dashboard" replace />;
   }
@@ -32,9 +31,17 @@ export default function LoginPage() {
         username: userPayload?.username,
         email: userPayload?.email ?? credentials.email,
         google_email_personal: userPayload?.google_email_personal,
-        google_email_business: userPayload?.google_email_business, 
+        google_email_business: userPayload?.google_email_business,
       });
-      navigate('/dashboard');
+
+      if ((userPayload?.google_email_personal === '' || undefined || null) || (userPayload?.google_email_business === '' || undefined || null)) {
+        console.log("opening connect account")
+        navigate('/connect-accounts')
+      }
+      else {
+        navigate('/dashboard');
+      }
+      
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       actions.setError(errorMessage);
@@ -64,7 +71,7 @@ export default function LoginPage() {
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
         <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
           <AuthForm onSubmit={handleLogin} isLoading={isLoading} mode="login" />
-          
+
           <div className="mt-6 text-center">
             <p className="text-sm text-gray-600">
               Don't have an account?{' '}

@@ -1,6 +1,5 @@
 import axios from 'axios';
 
-const AUTH_BASE_URL = 'https://api.tidymailr.com';
 const API_BASE_URL = 'https://api.tidymailr.com';
 
 // Create axios instance with default config
@@ -37,8 +36,14 @@ interface AuthResponse {
   token: string;
 }
 
-interface GoogleConnectOptions {
+interface GoogleConnectStartOptions {
   type: 'workspace' | 'personal';
+}
+
+interface GoogleSaveTokenOptions {
+  type: 'personal' | 'business';
+  code: string; // OAuth authorization code (when returning from Google)
+  user_id: number | string;
 }
 
 interface SyncOptions {
@@ -91,9 +96,20 @@ export const auth = {
     }
   },
 
-  async connectGoogle(options: GoogleConnectOptions) {
+  async connectGoogle(options: GoogleConnectStartOptions) {
     try {
+      // Start Google connect flow (server may respond with a redirect URL)
       const response = await axiosInstance.post('/auth/google', options);
+      return response.data;
+    } catch (error) {
+      throw new Error('Google connection failed');
+    }
+  },
+
+  async saveGoogleToken(options: GoogleSaveTokenOptions) {
+    try {
+      // Exchange Google auth code and save token for given account type
+      const response = await axiosInstance.post('/mail/api/save-token', options);
       return response.data;
     } catch (error) {
       throw new Error('Google connection failed');
@@ -149,9 +165,7 @@ export const accounts = {
 };
 
 export const tasks = {
-  // Uses new backend endpoints:
-  // GET  https://api.tidymailr.com/task/get_all?user_id=:userId
-  // POST https://api.tidymailr.com/task/create
+
   async getTasks(userId: string | number) {
     const numericUserId = typeof userId === 'string' ? Number(userId) : userId;
     if (!numericUserId || Number.isNaN(numericUserId)) {
@@ -310,16 +324,5 @@ export const tasks = {
   async deleteTask(userId: string | number, taskId: string) {
     // Use the update endpoint with is_deleted: 1
     return this.updateTask(userId, taskId, { is_deleted: 1 });
-  },
-
-  async getTasksByPriority(priority: 'high' | 'medium' | 'low') {
-    try {
-      const response = await axiosInstance.get('/tasks', {
-        params: { priority }
-      });
-      return response.data;
-    } catch (error) {
-      throw new Error('Failed to load tasks by priority');
-    }
   },
 };
