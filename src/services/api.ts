@@ -162,6 +162,15 @@ export const accounts = {
       throw new Error('Failed to disconnect account');
     }
   },
+
+  async removeGoogleAccount(payload: { email: string; user_id: number | string }) {
+    try {
+      const response = await axiosInstance.post('/mail/api/remove-account', payload);
+      return response.data;
+    } catch (error) {
+      throw new Error('Failed to disconnect Google account');
+    }
+  },
 };
 
 export const tasks = {
