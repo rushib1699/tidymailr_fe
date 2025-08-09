@@ -17,6 +17,8 @@ export default function Layout({ children }: LayoutProps) {
     const handleResize = () => {
       if (window.innerWidth < 768) {
         setSidebarCollapsed(true);
+      } else {
+        setSidebarCollapsed(false);
       }
     };
 
@@ -27,7 +29,10 @@ export default function Layout({ children }: LayoutProps) {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <SideNavbar />
+      <SideNavbar
+        isCollapsed={sidebarCollapsed}
+        onToggleCollapse={() => setSidebarCollapsed(prev => !prev)}
+      />
       
       {/* Main Content */}
       <div className={`transition-all duration-300 ${sidebarCollapsed ? 'ml-16' : 'ml-64'}`}>

@@ -21,7 +21,11 @@ export const router = createBrowserRouter([
   },
   {
     path: '/connect-accounts',
-    element: <ConnectAccountsPage />,
+    element: (
+      <ProtectedRoute>
+          <ConnectAccountsPage />
+      </ProtectedRoute>
+    ),
   },
   {
     path: '/onboarding',

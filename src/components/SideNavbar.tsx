@@ -2,11 +2,15 @@ import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 
-export default function SideNavbar() {
+interface SideNavbarProps {
+  isCollapsed: boolean;
+  onToggleCollapse: () => void;
+}
+
+export default function SideNavbar({ isCollapsed, onToggleCollapse }: SideNavbarProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const { state, actions } = useApp();
-  const [isCollapsed, setIsCollapsed] = useState(false);
 
   const navigation = [
     {
@@ -72,7 +76,7 @@ export default function SideNavbar() {
             </div>
           )}
           <button
-            onClick={() => setIsCollapsed(!isCollapsed)}
+            onClick={onToggleCollapse}
             className="p-2 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

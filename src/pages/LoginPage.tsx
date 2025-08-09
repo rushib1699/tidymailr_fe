@@ -34,11 +34,16 @@ export default function LoginPage() {
         google_email_business: userPayload?.google_email_business,
       });
 
-      if ((userPayload?.google_email_personal === '' || undefined || null) || (userPayload?.google_email_business === '' || undefined || null)) {
-        console.log("opening connect account")
-        navigate('/connect-accounts')
-      }
-      else {
+      const hasPersonal = Boolean(userPayload?.google_email_personal);
+      const hasWorkspace = Boolean(userPayload?.google_email_business);
+
+      // Reflect connected accounts in global state
+      actions.setConnectedAccount('personal', hasPersonal);
+      actions.setConnectedAccount('workspace', hasWorkspace);
+
+      if (!hasPersonal || !hasWorkspace) {
+        navigate('/connect-accounts');
+      } else {
         navigate('/dashboard');
       }
       

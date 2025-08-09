@@ -16,7 +16,7 @@ export default function ConnectAccountsPage() {
     navigate('/onboarding');
   };
 
-  const googleClientId = '136600463717-s9b1drgvo8nckums2kqfvqr0qd2509o6.apps.googleusercontent.com';
+  const googleClientId = '289903674312-44khu8d36iu2gmr6gig9elc6vs32h04a.apps.googleusercontent.com'
  const googleRedirectUri = 'http://localhost:5173/connect-accounts'
 //  `${window.location.origin}/connect-accounts`;
  
