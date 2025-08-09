@@ -142,6 +142,15 @@ export const mail = {
       throw new Error('Email sync failed');
     }
   },
+
+  async listEmails(options: { user_email: string; label: 'INBOX' | 'SENT' | 'DRAFTS' }) {
+    try {
+      const response = await axiosInstance.post('/mail/api/list-emails', options);
+      return response.data;
+    } catch (error) {
+      throw new Error('Failed to load emails');
+    }
+  },
 };
 
 export const accounts = {
