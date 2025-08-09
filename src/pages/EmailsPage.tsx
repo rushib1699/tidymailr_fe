@@ -455,16 +455,16 @@ export default function EmailsPage() {
                   <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
                     {selectedEmail.preview}
                   </p>
-                  <div className="mt-8 p-4 bg-gray-50 rounded-lg">
+                  {/* <div className="mt-8 p-4 bg-gray-50 rounded-lg">
                     <p className="text-sm text-gray-500 italic">
                       Full email content would be loaded here. You'll need to implement an API endpoint to fetch the complete email body.
                     </p>
-                  </div>
+                  </div> */}
                 </div>
               </div>
 
               {/* Reply Section - Fixed at bottom */}
-              <div className="flex-shrink-0 border-t border-gray-200 bg-gray-50 p-4">
+              {/* <div className="flex-shrink-0 border-t border-gray-200 bg-gray-50 p-4">
                 <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-3">
                   <button className="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 transition-colors">
                     <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -482,7 +482,7 @@ export default function EmailsPage() {
                     Forward
                   </button>
                 </div>
-              </div>
+              </div> */}
             </>
           ) : (
             <div className="flex-1 flex items-center justify-center bg-gray-50">

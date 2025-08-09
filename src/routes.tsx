@@ -7,6 +7,7 @@ import DashboardPage from './pages/DashboardPage';
 import ProfilePage from './pages/ProfilePage';
 import TasksPage from './pages/TasksPage';
 import EmailsPage from './pages/EmailsPage';
+import SettingsPage from './pages/SettingsPage';
 import Layout from './components/Layout';
 import ProtectedRoute from './components/ProtectedRoute';
 
@@ -31,9 +32,7 @@ export const router = createBrowserRouter([
     path: '/onboarding',
     element: (
       <ProtectedRoute>
-        <Layout>
           <OnboardingPage />
-        </Layout>
       </ProtectedRoute>
     ),
   },
@@ -73,6 +72,16 @@ export const router = createBrowserRouter([
       <ProtectedRoute>
         <Layout>
           <TasksPage />
+        </Layout>
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/settings',
+    element: (
+      <ProtectedRoute>
+        <Layout>
+          <SettingsPage />
         </Layout>
       </ProtectedRoute>
     ),

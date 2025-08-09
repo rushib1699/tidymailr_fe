@@ -140,7 +140,8 @@ export default function SideNavbar({ isCollapsed, onToggleCollapse }: SideNavbar
         <div className="border-t border-gray-200 p-2">
           <div className="space-y-1">
             <Link
-              to="/onboarding"
+              // to="/onboarding"
+              to="/settings"
               className={`group flex items-center px-3 py-2 text-sm font-medium text-gray-600 rounded-md hover:bg-gray-50 hover:text-gray-900 ${
                 isCollapsed ? 'justify-center' : ''
               }`}
