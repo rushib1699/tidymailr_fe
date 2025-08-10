@@ -24,42 +24,33 @@ export default function ProfilePage({ embedded = false }: { embedded?: boolean }
   const [nameInput, setNameInput] = useState(state.user?.name ?? '');
   const [isSavingName, setIsSavingName] = useState(false);
 
-  // Seed from login payload and then augment from API if needed
+  // Seed from login payload only
   useEffect(() => {
     const seeded: ConnectedAccount[] = [];
+
     if (state.user?.google_email_business) {
       seeded.push({
         id: 'google-business',
         email: state.user.google_email_business,
-        provider: 'Google (Workspace)'
+        provider: 'Google (Workspace)',
       });
     }
+
     if (state.user?.google_email_personal) {
       seeded.push({
         id: 'google-personal',
         email: state.user.google_email_personal,
-        provider: 'Google (Personal)'
+        provider: 'Google (Personal)',
       });
     }
-    if (seeded.length > 0) {
-      setConnectedAccounts(seeded);
-      setIsLoading(false);
-    } else {
-      loadConnectedAccounts();
-    }
-  }, [state.user?.google_email_business, state.user?.google_email_personal]);
 
-  const loadConnectedAccounts = async (): Promise<void> => {
-    try {
-      const response = await accounts.getConnectedAccounts();
-      setConnectedAccounts(response.accounts || []);
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      actions.setError(errorMessage);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    setConnectedAccounts(seeded);
+    setIsLoading(false);
+  }, [
+    state.user?.google_email_business,
+    state.user?.google_email_personal,
+  ]);
+
 
   const handleDisconnect = async (accountId: string): Promise<void> => {
     if (!confirm('Disconnect this Google account? This will remove access and synced data.')) {

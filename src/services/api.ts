@@ -66,6 +66,7 @@ interface TaskData {
 }
 
 export const auth = {
+  // api needed
   async signUp(credentials: Credentials): Promise<AuthResponse> {
     try {
       const response = await axiosInstance.post<AuthResponse>('/auth/signup', credentials);
@@ -81,6 +82,7 @@ export const auth = {
     }
   },
 
+  // api needed
   async updateProfile(payload: { user_id: number | string; name?: string; username?: string }) {
     try {
       const response = await axiosInstance.post('/user/update', payload);
@@ -88,7 +90,7 @@ export const auth = {
     } catch (error) {
       throw new Error('Failed to update profile');
     }
-  },
+  }, 
 
   async signIn(credentials: Credentials): Promise<AuthResponse> {
     try {
@@ -131,18 +133,8 @@ export const auth = {
   },
 };
 
-export const calendar = {
-  async listCalendars() {
-    try {
-      const response = await axiosInstance.get('/calendar/list');
-      return response.data;
-    } catch (error) {
-      throw new Error('Failed to load calendars');
-    }
-  },
-};
-
 export const mail = {
+  // api needed
   async sync(options: SyncOptions = {}) {
     try {
       const response = await axiosInstance.post('/mail/sync', { ...options, limit: 200 });
@@ -163,15 +155,7 @@ export const mail = {
 };
 
 export const accounts = {
-  async getConnectedAccounts() {
-    try {
-      const response = await axiosInstance.get('/accounts/connected');
-      return response.data;
-    } catch (error) {
-      throw new Error('Failed to load connected accounts');
-    }
-  },
-
+  // api needed
   async removeGoogleAccount(payload: { email: string; user_id: number | string }) {
     try {
       const response = await axiosInstance.post('/mail/api/remove-account', payload);
@@ -183,7 +167,6 @@ export const accounts = {
 };
 
 export const tasks = {
-
   async getTasks(userId: string | number) {
     const numericUserId = typeof userId === 'string' ? Number(userId) : userId;
     if (!numericUserId || Number.isNaN(numericUserId)) {
