@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
-import { accounts, mail } from '../services/api';
+import { accounts, mail, auth } from '../services/api';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 interface ConnectedAccount {
   id: string;
@@ -11,12 +14,15 @@ interface ConnectedAccount {
   status?: string;
 }
 
-export default function ProfilePage() {
+export default function ProfilePage({ embedded = false }: { embedded?: boolean }) {
   const { state, actions } = useApp();
   const [connectedAccounts, setConnectedAccounts] = useState<ConnectedAccount[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isDisconnecting, setIsDisconnecting] = useState<string | null>(null);
   const [isSyncing, setIsSyncing] = useState<string | null>(null);
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [nameInput, setNameInput] = useState(state.user?.name ?? '');
+  const [isSavingName, setIsSavingName] = useState(false);
 
   // Seed from login payload and then augment from API if needed
   useEffect(() => {
@@ -109,6 +115,26 @@ export default function ProfilePage() {
     }
   };
 
+  const handleSaveName = async (): Promise<void> => {
+    if (!state.user?.id) return;
+    if (!nameInput || nameInput.trim() === '') return;
+    try {
+      setIsSavingName(true);
+      const response = await auth.updateProfile({ user_id: state.user.id, name: nameInput.trim() });
+      const updatedUser = (response && (response as any).user) ? (response as any).user : response;
+      actions.setUser({
+        ...(state.user as any),
+        name: updatedUser?.name ?? nameInput.trim(),
+      } as any);
+      setIsEditingName(false);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      actions.setError(errorMessage);
+    } finally {
+      setIsSavingName(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -118,43 +144,71 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="py-12">
+    <div className={embedded ? '' : 'py-12'}>
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Profile & Account Settings</h1>
-          <p className="mt-2 text-gray-600">Manage your connected accounts and sync settings</p>
-        </div>
+        {!embedded && (
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold text-gray-900">Profile & Account Settings</h1>
+            <p className="mt-2 text-gray-600">Manage your connected accounts and sync settings</p>
+          </div>
+        )}
 
         {/* User Info */}
-        <div className="bg-white shadow rounded-lg mb-8">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h2 className="text-lg font-medium text-gray-900">Account Information</h2>
-          </div>
-          <div className="px-6 py-4">
-            <div className="flex items-center">
-              <div className="w-12 h-12 bg-primary-600 rounded-full flex items-center justify-center">
-                <span className="text-white font-medium text-lg">
-                  {state.user?.email?.[0]?.toUpperCase() || 'U'}
-                </span>
-              </div>
-              <div className="ml-4">
-                <p className="text-lg font-medium text-gray-900">{state.user?.name || 'User'}</p>
-                <p className="text-gray-600">{state.user?.email}</p>
+        <Card className="mb-8">
+          <CardHeader className="border-b border-gray-200">
+            <CardTitle className="text-lg">Account Information</CardTitle>
+          </CardHeader>
+          <CardContent className="py-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center">
+                <div className="w-12 h-12 bg-primary-600 rounded-full flex items-center justify-center">
+                  <span className="text-white font-medium text-lg">
+                    {state.user?.email?.[0]?.toUpperCase() || 'U'}
+                  </span>
+                </div>
+                <div className="ml-4">
+                  {isEditingName ? (
+                    <div className="flex items-center gap-2">
+                      <Input
+                        value={nameInput}
+                        onChange={(e) => setNameInput(e.target.value)}
+                        className="w-60"
+                      />
+                      <Button onClick={handleSaveName} disabled={isSavingName}>
+                        {isSavingName ? 'Saving…' : 'Save'}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          setIsEditingName(false);
+                          setNameInput(state.user?.name ?? '');
+                        }}
+                        disabled={isSavingName}
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-3">
+                      <p className="text-lg font-medium text-gray-900">{state.user?.name || 'User'}</p>
+                      <Button variant="link" className="px-0" onClick={() => setIsEditingName(true)}>
+                        Edit
+                      </Button>
+                    </div>
+                  )}
+                  <p className="text-gray-600">{state.user?.email}</p>
+                </div>
               </div>
             </div>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
 
         {/* Connected Accounts */}
-        <div className="bg-white shadow rounded-lg">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h2 className="text-lg font-medium text-gray-900">Connected Accounts</h2>
-            <p className="mt-1 text-sm text-gray-600">
-              Manage your connected email accounts. Each account syncs up to 200 emails.
-            </p>
-          </div>
-
-          <div className="px-6 py-4">
+        <Card>
+          <CardHeader className="border-b border-gray-200">
+            <CardTitle className="text-lg">Connected Accounts</CardTitle>
+          </CardHeader>
+          <CardContent className="py-4">
             {connectedAccounts.length === 0 ? (
               <div className="text-center py-12">
                 <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -163,12 +217,9 @@ export default function ProfilePage() {
                 <h3 className="mt-2 text-sm font-medium text-gray-900">No connected accounts</h3>
                 <p className="mt-1 text-sm text-gray-500">Get started by connecting an email account.</p>
                 <div className="mt-6">
-                  <button
-                    onClick={() => window.location.href = '/connect-accounts'}
-                    className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700"
-                  >
+                  <Button onClick={() => (window.location.href = '/connect-accounts')}>
                     Connect Account
-                  </button>
+                  </Button>
                 </div>
               </div>
             ) : (
@@ -208,20 +259,22 @@ export default function ProfilePage() {
                         </div>
                       </div>
                       <div className="flex items-center space-x-2">
-                        <button
+                        <Button
+                          variant="secondary"
+                          size="sm"
                           onClick={() => handleSyncAccount(account.id)}
                           disabled={isSyncing === account.id}
-                          className="px-3 py-1 text-sm font-medium text-primary-600 bg-primary-50 rounded-md hover:bg-primary-100 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           {isSyncing === account.id ? 'Syncing...' : 'Sync Now'}
-                        </button>
-                        <button
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          size="sm"
                           onClick={() => handleDisconnect(account.id)}
                           disabled={isDisconnecting === account.id}
-                          className="px-3 py-1 text-sm font-medium text-red-600 bg-red-50 rounded-md hover:bg-red-100 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           {isDisconnecting === account.id ? 'Disconnecting...' : 'Disconnect'}
-                        </button>
+                        </Button>
                       </div>
                     </div>
                     <div className="mt-3 bg-gray-50 rounded-md p-3">
@@ -241,20 +294,17 @@ export default function ProfilePage() {
                 ))}
 
                 <div className="mt-6 pt-6 border-t border-gray-200">
-                  <button
-                    onClick={() => window.location.href = '/connect-accounts'}
-                    className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
-                  >
+                  <Button variant="outline" onClick={() => (window.location.href = '/connect-accounts')}>
                     <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                     </svg>
                     Connect Another Account
-                  </button>
+                  </Button>
                 </div>
               </div>
             )}
-          </div>
-        </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

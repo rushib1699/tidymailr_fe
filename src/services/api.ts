@@ -81,6 +81,15 @@ export const auth = {
     }
   },
 
+  async updateProfile(payload: { user_id: number | string; name?: string; username?: string }) {
+    try {
+      const response = await axiosInstance.post('/user/update', payload);
+      return response.data;
+    } catch (error) {
+      throw new Error('Failed to update profile');
+    }
+  },
+
   async signIn(credentials: Credentials): Promise<AuthResponse> {
     try {
       const response = await axiosInstance.post<AuthResponse>('/login', credentials);
