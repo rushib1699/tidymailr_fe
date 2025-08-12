@@ -1,9 +1,12 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import StepQuestionnaire from '../components/OnboardingWizard/StepQuestionnaire';
 import StepFilters from '../components/OnboardingWizard/StepFilters';
 import StepCalendar from '../components/OnboardingWizard/StepCalendar';
 import StepHours from '../components/OnboardingWizard/StepHours';
 import StepSync from '../components/OnboardingWizard/StepSync';
+
+import { onboarding } from '../services/api';
 
 interface Step {
   id: number;
@@ -16,11 +19,22 @@ interface Step {
 export default function OnboardingPage() {
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(1);
-  const totalSteps = 4;
+  const totalSteps = 5; // Updated from 4 to 5
 
   const steps: Step[] = [
     { 
       id: 1, 
+      title: 'Questionnaire', 
+      description: 'Help us understand your work style',
+      component: StepQuestionnaire,
+      icon: (
+        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+      )
+    },
+    { 
+      id: 2, 
       title: 'Email Filters', 
       description: 'Set up smart filters to organize your inbox',
       component: StepFilters,
@@ -31,7 +45,7 @@ export default function OnboardingPage() {
       )
     },
     { 
-      id: 2, 
+      id: 3, 
       title: 'Calendar Setup', 
       description: 'Connect and configure your calendar preferences',
       component: StepCalendar,
@@ -42,7 +56,7 @@ export default function OnboardingPage() {
       )
     },
     { 
-      id: 3, 
+      id: 4, 
       title: 'Working Hours', 
       description: 'Define your working schedule for smart notifications',
       component: StepHours,
@@ -53,7 +67,7 @@ export default function OnboardingPage() {
       )
     },
     { 
-      id: 4, 
+      id: 5, 
       title: 'Sync Emails', 
       description: 'Start syncing your emails and get organized',
       component: StepSync,
@@ -211,7 +225,7 @@ export default function OnboardingPage() {
                   <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
-                  Estimated time: {5 - currentStep} minutes remaining
+                  Estimated time: {6 - currentStep} minutes remaining
                 </div>
               </div>
             </div>
@@ -288,10 +302,11 @@ export default function OnboardingPage() {
                     Pro tip
                   </h3>
                   <p className="mt-1 text-sm text-blue-700">
-                    {currentStep === 1 && "You can always adjust these filters later from your settings."}
-                    {currentStep === 2 && "Connect multiple calendars to see all your events in one place."}
-                    {currentStep === 3 && "Set different hours for different days to match your schedule."}
-                    {currentStep === 4 && "Initial sync may take a few minutes depending on your inbox size."}
+                    {currentStep === 1 && "Be honest with your answers - this helps us customize the perfect workflow for you."}
+                    {currentStep === 2 && "You can always adjust these filters later from your settings."}
+                    {currentStep === 3 && "Connect multiple calendars to see all your events in one place."}
+                    {currentStep === 4 && "Set different hours for different days to match your schedule."}
+                    {currentStep === 5 && "Initial sync may take a few minutes depending on your inbox size."}
                   </p>
                 </div>
               </div>

@@ -327,3 +327,15 @@ export const tasks = {
     return this.updateTask(userId, taskId, { is_deleted: 1 });
   },
 };
+
+export const onboarding = {
+  async getQuestions() {
+    try {
+      const response = await axiosInstance.post('/matrix/get_questions',{});      
+      const data = response.data;
+        return data;
+    } catch (error) {
+      throw new Error('Failed to load questions');
+    }
+  },
+}
