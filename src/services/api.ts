@@ -441,3 +441,20 @@ export const onboarding = {
     }
   }
 };
+
+export const plans = {
+  async getPlans(payload: {
+    user_id: number | string;
+    date: string;
+  }) {
+    try {
+      const response = await axiosInstance.post(
+        '/plan/getPlan',
+        payload
+      );
+      return response.data;
+    } catch (error) {
+      throw new Error('Failed to fetch plans');
+    }
+  },
+};

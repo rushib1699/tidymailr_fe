@@ -87,6 +87,7 @@ function getPageTitle(pathname: string): string {
     '/tasks': 'Task Bucket',
     '/profile': 'Profile & Settings',
     '/onboarding': 'Setup & Configuration',
+    '/plans': 'Plans'
   };
   
   return titles[pathname] || 'EmailApp';

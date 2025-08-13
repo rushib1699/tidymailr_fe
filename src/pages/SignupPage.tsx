@@ -20,7 +20,7 @@ export default function SignupPage() {
 
     try {
       const response = await auth.signUp(credentials);
-      actions.setUser(response.user || { email: credentials.email });
+      // actions.setUser(response.user || { email: credentials.email });
       navigate('/connect-accounts');
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';

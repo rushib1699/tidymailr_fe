@@ -8,6 +8,7 @@ import ProfilePage from './pages/ProfilePage';
 import TasksPage from './pages/TasksPage';
 import EmailsPage from './pages/EmailsPage';
 import SettingsPage from './pages/SettingsPage';
+import PlansPage from './pages/PlansPage';
 import Layout from './components/Layout';
 import ProtectedRoute from './components/ProtectedRoute';
 
@@ -82,6 +83,16 @@ export const router = createBrowserRouter([
       <ProtectedRoute>
         <Layout>
           <SettingsPage />
+        </Layout>
+      </ProtectedRoute>
+    ),
+  },
+    {
+    path: '/plans',
+    element: (
+      <ProtectedRoute>
+        <Layout>
+          <PlansPage />  
         </Layout>
       </ProtectedRoute>
     ),

@@ -39,6 +39,26 @@ export default function SideNavbar({ isCollapsed, onToggleCollapse }: SideNavbar
         </svg>
       ),
     },
+    {
+      name: 'Plans',
+      href: '/plans',
+      icon: (
+        <svg
+          className="w-5 h-5"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M8 7V3m8 4V3m-9 8h10m-12 8h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+          />
+        </svg>
+      ),
+    }
+
   ];
 
   const handleLogout = () => {
@@ -49,9 +69,8 @@ export default function SideNavbar({ isCollapsed, onToggleCollapse }: SideNavbar
   };
 
   return (
-    <div className={`bg-white shadow-lg h-screen fixed left-0 top-0 z-40 transition-all duration-300 ${
-      isCollapsed ? 'w-16' : 'w-64'
-    }`}>
+    <div className={`bg-white shadow-lg h-screen fixed left-0 top-0 z-40 transition-all duration-300 ${isCollapsed ? 'w-16' : 'w-64'
+      }`}>
       <div className="flex flex-col h-full">
         {/* Logo/Header */}
         <div className="flex items-center justify-between p-4 border-b border-gray-200">
@@ -104,11 +123,10 @@ export default function SideNavbar({ isCollapsed, onToggleCollapse }: SideNavbar
               <Link
                 key={item.name}
                 to={item.href}
-                className={`group flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors ${
-                  isActive
+                className={`group flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors ${isActive
                     ? 'bg-primary-100 text-primary-700 border-r-2 border-primary-700'
                     : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                }`}
+                  }`}
               >
                 <div className={`flex-shrink-0 ${isCollapsed ? 'mr-0' : 'mr-3'}`}>
                   {item.icon}
@@ -132,9 +150,8 @@ export default function SideNavbar({ isCollapsed, onToggleCollapse }: SideNavbar
             <Link
               // to="/onboarding"
               to="/settings"
-              className={`group flex items-center px-3 py-2 text-sm font-medium text-gray-600 rounded-md hover:bg-gray-50 hover:text-gray-900 ${
-                isCollapsed ? 'justify-center' : ''
-              }`}
+              className={`group flex items-center px-3 py-2 text-sm font-medium text-gray-600 rounded-md hover:bg-gray-50 hover:text-gray-900 ${isCollapsed ? 'justify-center' : ''
+                }`}
             >
               <svg className={`w-5 h-5 flex-shrink-0 ${isCollapsed ? 'mr-0' : 'mr-3'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
@@ -147,12 +164,11 @@ export default function SideNavbar({ isCollapsed, onToggleCollapse }: SideNavbar
                 </div>
               )}
             </Link>
-            
+
             <button
               onClick={handleLogout}
-              className={`group w-full flex items-center px-3 py-2 text-sm font-medium text-red-600 rounded-md hover:bg-red-50 hover:text-red-700 ${
-                isCollapsed ? 'justify-center' : ''
-              }`}
+              className={`group w-full flex items-center px-3 py-2 text-sm font-medium text-red-600 rounded-md hover:bg-red-50 hover:text-red-700 ${isCollapsed ? 'justify-center' : ''
+                }`}
             >
               <svg className={`w-5 h-5 flex-shrink-0 ${isCollapsed ? 'mr-0' : 'mr-3'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
