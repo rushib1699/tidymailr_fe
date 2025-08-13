@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
 import { onboarding } from '../../services/api';
+import { StepProps } from '../../pages/OnboardingPage';
 
 interface Option {
     id: number;
     option_code: string;
+    option_text: string;
     tag_id: number;
     category_id: number;
     score: number;
@@ -27,17 +29,12 @@ interface CategoryScores {
     rigidity: number;
 }
 
-export default function StepQuestionnaire() {
+export default function StepQuestionnaire({ updateData, onStepComplete }: StepProps) {
     const [questions, setQuestions] = useState<Question[]>([]);
     const [loading, setLoading] = useState(true);
     const [currentSubstep, setCurrentSubstep] = useState(1);
     const [answers, setAnswers] = useState<Record<number, Option>>({});
     const [showResults, setShowResults] = useState(false);
-    const [scores, setScores] = useState<CategoryScores>({
-        urgency_bias: 0,
-        importance_bias: 0,
-        rigidity: 0
-    });
 
     const questionsPerPage = 2;
     const totalSubsteps = 7;
@@ -101,7 +98,40 @@ export default function StepQuestionnaire() {
             }
         });
 
-        setScores(finalScores);
+        // Create questionnaire array with complete question and answer data
+        const questionnaireData = questions.map(question => {
+            const answer = answers[question.id];
+            if (answer) {
+                return {
+                    id: question.id,
+                    question_text: question.question_text,
+                    created_at: question.created_at,
+                    updated_at: question.updated_at,
+                    is_active: question.is_active,
+                    is_deleted: question.is_deleted,
+                    answer: {
+                        id: answer.id,
+                        option_code: answer.option_code,
+                        option_text: answer.option_text,
+                        tag_id: answer.tag_id,
+                        category_id: answer.category_id,
+                        score: answer.score,
+                        category: answer.category,
+                        tag: answer.tag
+                    }
+                };
+            }
+            return null;
+        }).filter(Boolean) as any[];
+
+        // Update the onboarding data with questionnaire responses and scores
+        updateData({
+            questionnaire: questionnaireData,
+            score: finalScores
+        });
+
+        // Mark step as complete when showing results
+        onStepComplete(true);
     };
 
     const isCurrentPageComplete = () => {
@@ -122,39 +152,18 @@ export default function StepQuestionnaire() {
     if (showResults) {
         return (
             <div className="space-y-6">
-                <h3 className="text-2xl font-bold text-gray-900 mb-6">Your Work Style Profile</h3>
-
-                <div className="grid gap-4">
-                    {Object.entries(scores).map(([category, score]) => (
-                        <div key={category} className="bg-gray-50 rounded-lg p-6">
-                            <div className="flex items-center justify-between mb-3">
-                                <h4 className="text-lg font-semibold text-gray-900 capitalize">
-                                    {category.replace('_', ' ')}
-                                </h4>
-                                <span className={`text-2xl font-bold ${score > 0 ? 'text-blue-600' : score < 0 ? 'text-green-600' : 'text-gray-600'
-                                    }`}>
-                                    {score > 0 ? '+' : ''}{score}
-                                </span>
-                            </div>
-                            <div className="w-full bg-gray-200 rounded-full h-3">
-                                <div
-                                    className={`h-3 rounded-full transition-all duration-500 ${score > 0 ? 'bg-blue-500' : score < 0 ? 'bg-green-500' : 'bg-gray-400'
-                                        }`}
-                                    style={{ width: `${Math.min(100, Math.abs(score) * 10)}%` }}
-                                />
-                            </div>
-                            <p className="text-sm text-gray-600 mt-2">
-                                {category === 'urgency_bias' && (score > 0 ? 'You tend to prioritize urgent tasks' : 'You balance urgency with other factors')}
-                                {category === 'importance_bias' && (score > 0 ? 'You focus on important and impactful work' : 'You consider multiple factors beyond importance')}
-                                {category === 'rigidity' && (score > 0 ? 'You prefer structured and planned approaches' : 'You have a flexible and adaptive work style')}
-                            </p>
-                        </div>
-                    ))}
-                </div>
-
-                <div className="bg-blue-50 rounded-lg p-4">
-                    <p className="text-sm text-blue-900">
-                        <strong>What's next?</strong> We'll use this profile to customize your email filters, calendar settings, and notifications to match your work style.
+                <div className="text-center py-8">
+                    <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100 mb-4">
+                        <svg className="h-8 w-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                    </div>
+                    <h3 className="text-2xl font-bold text-gray-900 mb-4">Thank you for filling the questionnaire!</h3>
+                    <p className="text-lg text-gray-600 mb-6">
+                        Your responses will help us customize your experience.
+                    </p>
+                    <p className="text-base text-gray-500">
+                        Please move ahead with the onboarding process.
                     </p>
                 </div>
 
@@ -193,7 +202,7 @@ export default function StepQuestionnaire() {
 
             {/* Questions */}
             <div className="space-y-8">
-                {getCurrentQuestions().map((question, index) => (
+                {getCurrentQuestions().map((question) => (
                     <div key={question.id} className="space-y-4">
                         <h4 className="text-lg font-medium text-gray-900">
                             {question.question_text}
@@ -225,7 +234,7 @@ export default function StepQuestionnaire() {
                                             )}
                                         </div>
                                         <span className="ml-3 text-gray-700">
-                                            Option {option.option_code}
+                                            Option {option.option_text}
                                         </span>
                                     </div>
                                 </label>

@@ -6,9 +6,9 @@ const API_BASE_URL = 'https://api.tidymailr.com';
 const axiosInstance = axios.create({
   baseURL: API_BASE_URL,
   headers: {
-    'Content-Type': 'application/json'
+    'Content-Type': 'application/json',
   },
-  withCredentials: true // This ensures cookies are sent with requests
+  withCredentials: true, // This ensures cookies are sent with requests
 });
 
 // Add auth token interceptor
@@ -69,13 +69,16 @@ export const auth = {
   // api needed
   async signUp(credentials: Credentials): Promise<AuthResponse> {
     try {
-      const response = await axiosInstance.post<AuthResponse>('/auth/signup', credentials);
-      
+      const response = await axiosInstance.post<AuthResponse>(
+        '/auth/signup',
+        credentials
+      );
+
       // Save auth token if returned from signup
       if (response.data && response.data.token) {
         localStorage.setItem('authToken', response.data.token);
       }
-      
+
       return response.data;
     } catch (error) {
       throw new Error('Signup failed');
@@ -83,24 +86,31 @@ export const auth = {
   },
 
   // api needed
-  async updateProfile(payload: { user_id: number | string; name?: string; username?: string }) {
+  async updateProfile(payload: {
+    user_id: number | string;
+    name?: string;
+    username?: string;
+  }) {
     try {
       const response = await axiosInstance.post('/user/update', payload);
       return response.data;
     } catch (error) {
       throw new Error('Failed to update profile');
     }
-  }, 
+  },
 
   async signIn(credentials: Credentials): Promise<AuthResponse> {
     try {
-      const response = await axiosInstance.post<AuthResponse>('/login', credentials);
-      
+      const response = await axiosInstance.post<AuthResponse>(
+        '/login',
+        credentials
+      );
+
       // Save auth token from login response
       if (response.data && response.data.token) {
         localStorage.setItem('authToken', response.data.token);
       }
-      
+
       return response.data;
     } catch (error) {
       throw new Error('Login failed');
@@ -120,7 +130,10 @@ export const auth = {
   async saveGoogleToken(options: GoogleSaveTokenOptions) {
     try {
       // Exchange Google auth code and save token for given account type
-      const response = await axiosInstance.post('/mail/api/save-token', options);
+      const response = await axiosInstance.post(
+        '/mail/api/save-token',
+        options
+      );
       return response.data;
     } catch (error) {
       throw new Error('Google connection failed');
@@ -134,19 +147,15 @@ export const auth = {
 };
 
 export const mail = {
-  // api needed
-  async sync(options: SyncOptions = {}) {
+  async listEmails(options: {
+    user_email: string;
+    label: 'INBOX' | 'SENT' | 'DRAFTS';
+  }) {
     try {
-      const response = await axiosInstance.post('/mail/sync', { ...options, limit: 200 });
-      return response.data;
-    } catch (error) {
-      throw new Error('Email sync failed');
-    }
-  },
-
-  async listEmails(options: { user_email: string; label: 'INBOX' | 'SENT' | 'DRAFTS' }) {
-    try {
-      const response = await axiosInstance.post('/mail/api/list-emails', options);
+      const response = await axiosInstance.post(
+        '/mail/api/list-emails',
+        options
+      );
       return response.data;
     } catch (error) {
       throw new Error('Failed to load emails');
@@ -155,10 +164,15 @@ export const mail = {
 };
 
 export const accounts = {
-  // api needed
-  async removeGoogleAccount(payload: { email: string; user_id: number | string }) {
+  async removeGoogleAccount(payload: {
+    email: string;
+    user_id: number | string;
+  }) {
     try {
-      const response = await axiosInstance.post('/mail/api/remove-account', payload);
+      const response = await axiosInstance.post(
+        '/mail/api/remove-account', // updated endpoint
+        payload
+      );
       return response.data;
     } catch (error) {
       throw new Error('Failed to disconnect Google account');
@@ -175,11 +189,11 @@ export const tasks = {
 
     try {
       const response = await axiosInstance.get('/task/get_all', {
-        params: { user_id: numericUserId }
+        params: { user_id: numericUserId },
       });
-      
+
       const data = response.data;
-      
+
       // Map backend tasks (numeric priority, boolean completed) to frontend shape
       const priorityNumToText = (p?: number): 'high' | 'medium' | 'low' => {
         if (p === 1) return 'high';
@@ -189,7 +203,12 @@ export const tasks = {
 
       const mapped = Array.isArray(data)
         ? data.map((t: any) => ({
-            id: String(t.id ?? t.task_id ?? crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2)),
+            id: String(
+              t.id ??
+                t.task_id ??
+                crypto?.randomUUID?.() ??
+                Math.random().toString(36).slice(2)
+            ),
             title: t.title,
             description: t.description ?? undefined,
             priority: priorityNumToText(t.priority),
@@ -197,15 +216,20 @@ export const tasks = {
             createdAt: t.created_at ?? t.createdAt ?? undefined,
           }))
         : Array.isArray(data?.tasks)
-        ? data.tasks.map((t: any) => ({
-            id: String(t.id ?? t.task_id ?? crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2)),
-            title: t.title,
-            description: t.description ?? undefined,
-            priority: priorityNumToText(t.priority),
-            status: t.completed ? 'completed' : 'pending',
-            createdAt: t.created_at ?? t.createdAt ?? undefined,
-          }))
-        : [];
+          ? data.tasks.map((t: any) => ({
+              id: String(
+                t.id ??
+                  t.task_id ??
+                  crypto?.randomUUID?.() ??
+                  Math.random().toString(36).slice(2)
+              ),
+              title: t.title,
+              description: t.description ?? undefined,
+              priority: priorityNumToText(t.priority),
+              status: t.completed ? 'completed' : 'pending',
+              createdAt: t.created_at ?? t.createdAt ?? undefined,
+            }))
+          : [];
 
       return { tasks: mapped };
     } catch (error) {
@@ -244,12 +268,21 @@ export const tasks = {
 
       // Map created task back to frontend shape
       const createdMapped = {
-        id: String(created?.id ?? created?.task_id ?? crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2)),
+        id: String(
+          created?.id ??
+            created?.task_id ??
+            crypto?.randomUUID?.() ??
+            Math.random().toString(36).slice(2)
+        ),
         title: created?.title ?? taskData.title,
         description: created?.description ?? taskData.description,
         priority: taskData.priority,
-        status: (created?.completed ? 'completed' : 'pending') as 'pending' | 'in-progress' | 'completed',
-        createdAt: created?.created_at ?? created?.createdAt ?? new Date().toISOString(),
+        status: (created?.completed ? 'completed' : 'pending') as
+          | 'pending'
+          | 'in-progress'
+          | 'completed',
+        createdAt:
+          created?.created_at ?? created?.createdAt ?? new Date().toISOString(),
       };
 
       return createdMapped;
@@ -261,15 +294,22 @@ export const tasks = {
   async updateTask(
     userId: string | number,
     taskId: string,
-    updates: Partial<TaskData & { sourceEmailId?: number; due_date?: string; is_active?: number; is_deleted?: number }>
+    updates: Partial<
+      TaskData & {
+        sourceEmailId?: number;
+        due_date?: string;
+        is_active?: number;
+        is_deleted?: number;
+      }
+    >
   ) {
     const numericUserId = typeof userId === 'string' ? Number(userId) : userId;
     const numericTaskId = typeof taskId === 'string' ? Number(taskId) : taskId;
-    
+
     if (!numericUserId || Number.isNaN(numericUserId)) {
       throw new Error('Invalid user id');
     }
-    
+
     if (!numericTaskId || Number.isNaN(numericTaskId)) {
       throw new Error('Invalid task id');
     }
@@ -277,7 +317,7 @@ export const tasks = {
     // First, get the existing task to merge with updates
     const { tasks: existingTasks } = await this.getTasks(userId);
     const existingTask = existingTasks.find((t: any) => t.id === taskId);
-    
+
     if (!existingTask) {
       throw new Error('Task not found');
     }
@@ -293,10 +333,15 @@ export const tasks = {
       id: numericTaskId,
       title: updates.title ?? existingTask.title,
       user_id: numericUserId,
-      sourceEmailId: updates.sourceEmailId ?? (existingTask as any).sourceEmailId,
+      sourceEmailId:
+        updates.sourceEmailId ?? (existingTask as any).sourceEmailId,
       description: updates.description ?? existingTask.description ?? '',
-      completed: updates.status ? updates.status === 'completed' : existingTask.status === 'completed',
-      priority: updates.priority ? priorityTextToNum(updates.priority) : priorityTextToNum(existingTask.priority),
+      completed: updates.status
+        ? updates.status === 'completed'
+        : existingTask.status === 'completed',
+      priority: updates.priority
+        ? priorityTextToNum(updates.priority)
+        : priorityTextToNum(existingTask.priority),
       due_date: updates.due_date ?? (existingTask as any).due_date,
       is_active: updates.is_active ?? 1,
       is_deleted: updates.is_deleted ?? 0,
@@ -304,7 +349,7 @@ export const tasks = {
 
     try {
       const response = await axiosInstance.post('/task/update', payload);
-      
+
       // Map updated task back to frontend shape
       const updated = response.data;
       const updatedMapped = {
@@ -312,8 +357,13 @@ export const tasks = {
         title: updated?.title ?? payload.title,
         description: updated?.description ?? payload.description,
         priority: updates.priority ?? existingTask.priority,
-        status: (updated?.completed ? 'completed' : existingTask.status !== 'completed' ? existingTask.status : 'pending') as 'pending' | 'in-progress' | 'completed',
-        createdAt: updated?.created_at ?? updated?.createdAt ?? existingTask.createdAt,
+        status: (updated?.completed
+          ? 'completed'
+          : existingTask.status !== 'completed'
+            ? existingTask.status
+            : 'pending') as 'pending' | 'in-progress' | 'completed',
+        createdAt:
+          updated?.created_at ?? updated?.createdAt ?? existingTask.createdAt,
       };
 
       return updatedMapped;
@@ -331,11 +381,63 @@ export const tasks = {
 export const onboarding = {
   async getQuestions() {
     try {
-      const response = await axiosInstance.post('/matrix/get_questions',{});      
+      const response = await axiosInstance.post('/matrix/get_questions', {});
       const data = response.data;
-        return data;
+      return data;
     } catch (error) {
       throw new Error('Failed to load questions');
     }
   },
-}
+
+  async SyncEmailOnboarding({
+    user_emails,
+    calendar_email,
+    user_id,
+  }: {
+    user_emails: (string | undefined)[];
+    calendar_email: string | undefined;
+    user_id: string | number | undefined;
+  }) {
+    try {
+      const payload = {
+        user_emails,
+        calendar_email,
+        user_id,
+      };
+
+      console.log('payload', payload);
+
+      const response = await axiosInstance.post(
+        '/plan/api/sync-emails',
+        payload,
+        {
+          timeout: 180000, // 2 minutes in milliseconds
+        }
+      );
+
+      return response.data;
+    } catch (error) {
+      throw new Error('Failed to sync emails');
+    }
+  },
+
+  async saveUserPreference({
+    data,
+    user_id,
+  }: {
+    data: any,
+    user_id: string | number | undefined;
+  }) {
+    try {
+      const payload = { user_id, data };
+
+      const response = await axiosInstance.post('/user/userPreference', payload, {
+        timeout: 120000 // extend for long processing
+      });
+
+      return response.data;
+    } catch (error) {
+      throw new Error('Failed to save user preferences');
+    }
+  }
+};

@@ -31,23 +31,23 @@ export default function DashboardPage() {
   //   syncEmails();
   // }, [actions]);
 
-  const handleRefreshSync = async (): Promise<void> => {
-    setSyncStatus('syncing');
-    actions.setLoading(true);
-    actions.setError(null);
+  // const handleRefreshSync = async (): Promise<void> => {
+  //   setSyncStatus('syncing');
+  //   actions.setLoading(true);
+  //   actions.setError(null);
 
-    try {
-      const response = await mail.sync({ limit: 200 });
-      actions.setEmails(response.emails || []);
-      setSyncStatus('completed');
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      actions.setError(`Email sync failed: ${errorMessage}`);
-      setSyncStatus('error');
-    } finally {
-      actions.setLoading(false);
-    }
-  };
+  //   try {
+  //     const response = await mail.sync({ limit: 200 });
+  //     actions.setEmails(response.emails || []);
+  //     setSyncStatus('completed');
+  //   } catch (error) {
+  //     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+  //     actions.setError(`Email sync failed: ${errorMessage}`);
+  //     setSyncStatus('error');
+  //   } finally {
+  //     actions.setLoading(false);
+  //   }
+  // };
 
   const getSyncStatusBadge = () => {
     switch (syncStatus) {
@@ -99,7 +99,7 @@ export default function DashboardPage() {
             <div className="flex items-center space-x-4">
               {getSyncStatusBadge()}
               <button
-                onClick={handleRefreshSync}
+                // onClick={handleRefreshSync}
                 disabled={state.isLoading}
                 className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >

@@ -16,6 +16,10 @@ export default function ConnectAccountsPage() {
     navigate('/onboarding');
   };
 
+  const handleSkip = () => {
+    navigate('/dashboard');
+  }
+
   const googleClientId = '289903674312-44khu8d36iu2gmr6gig9elc6vs32h04a.apps.googleusercontent.com'
  const googleRedirectUri = 'http://localhost:5173/connect-accounts'
 //  `${window.location.origin}/connect-accounts`;
@@ -209,7 +213,7 @@ export default function ConnectAccountsPage() {
 
           <div className="mt-6 text-center">
             <button
-              onClick={handleContinue}
+              onClick={handleSkip}
               className="text-sm text-gray-500 hover:text-gray-700 transition-colors"
             >
               Skip for now

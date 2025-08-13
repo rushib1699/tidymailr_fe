@@ -5,26 +5,94 @@ import StepFilters from '../components/OnboardingWizard/StepFilters';
 import StepCalendar from '../components/OnboardingWizard/StepCalendar';
 import StepHours from '../components/OnboardingWizard/StepHours';
 import StepSync from '../components/OnboardingWizard/StepSync';
-
 import { onboarding } from '../services/api';
+import { useApp } from '../context/AppContext';
 
 interface Step {
   id: number;
   title: string;
   description: string;
-  component: React.ComponentType;
+  component: React.ComponentType<StepProps>;
   icon: React.ReactNode;
+}
+
+interface QuestionnaireAnswer {
+  id: number;
+  option_code: string;
+  option_text: string;
+  tag_id: number;
+  category_id: number;
+  score: number;
+  category: string;
+  tag: string;
+}
+
+interface QuestionnaireItem {
+  id: number;
+  question_text: string;
+  created_at: string;
+  updated_at: string;
+  is_active: number;
+  is_deleted: number;
+  answer: QuestionnaireAnswer;
+}
+
+export interface OnboardingData {
+  email_filter_exclusion: string[];
+  email_filter_inclusion: string[];
+  working_hours: string; // 24-hour format string like "0900"
+  working_hours_end: string; // 24-hour format string like "1700"
+  break_hours: string; // 24-hour format string like "1200"
+  break_hours_end: string; // 24-hour format string like "1300"
+  primary_calendar: any[];
+  questionnaire: QuestionnaireItem[];
+  score: {
+    urgency_bias: number;
+    importance_bias: number;
+    rigidity: number;
+  };
+  user_timezone: string;
+}
+
+export interface StepProps {
+  data: OnboardingData;
+  updateData: (updates: Partial<OnboardingData>) => void;
+  onStepComplete: (isComplete: boolean) => void;
 }
 
 export default function OnboardingPage() {
   const navigate = useNavigate();
+  const { state } = useApp();
   const [currentStep, setCurrentStep] = useState(1);
+  const [isStepComplete, setIsStepComplete] = useState(false);
   const totalSteps = 5; // Updated from 4 to 5
 
+  // Common data object for all steps
+  const [onboardingData, setOnboardingData] = useState<OnboardingData>({
+    email_filter_exclusion: [],
+    email_filter_inclusion: [],
+    working_hours: "0900", // Default 9:00 AM
+    working_hours_end: "1700", // Default 5:00 PM
+    break_hours: "1200", // Default 12:00 PM
+    break_hours_end: "1300", // Default 1:00 PM
+    primary_calendar: [],
+    questionnaire: [],
+    score: {
+      urgency_bias: 0,
+      importance_bias: 0,
+      rigidity: 0
+    },
+    user_timezone: Intl.DateTimeFormat().resolvedOptions().timeZone // auto-detect browser timezone
+  });
+
+  const updateData = (updates: Partial<OnboardingData>) => {
+    setOnboardingData(prev => ({ ...prev, ...updates }));
+  };
+
   const steps: Step[] = [
-    { 
-      id: 1, 
-      title: 'Questionnaire', 
+    {
+      id: 1,
+      title: 'Questionnaire',
       description: 'Help us understand your work style',
       component: StepQuestionnaire,
       icon: (
@@ -33,9 +101,9 @@ export default function OnboardingPage() {
         </svg>
       )
     },
-    { 
-      id: 2, 
-      title: 'Email Filters', 
+    {
+      id: 2,
+      title: 'Email Filters',
       description: 'Set up smart filters to organize your inbox',
       component: StepFilters,
       icon: (
@@ -44,9 +112,9 @@ export default function OnboardingPage() {
         </svg>
       )
     },
-    { 
-      id: 3, 
-      title: 'Calendar Setup', 
+    {
+      id: 3,
+      title: 'Calendar Setup',
       description: 'Connect and configure your calendar preferences',
       component: StepCalendar,
       icon: (
@@ -55,9 +123,9 @@ export default function OnboardingPage() {
         </svg>
       )
     },
-    { 
-      id: 4, 
-      title: 'Working Hours', 
+    {
+      id: 4,
+      title: 'Working Hours',
       description: 'Define your working schedule for smart notifications',
       component: StepHours,
       icon: (
@@ -66,9 +134,9 @@ export default function OnboardingPage() {
         </svg>
       )
     },
-    { 
-      id: 5, 
-      title: 'Sync Emails', 
+    {
+      id: 5,
+      title: 'Sync Emails',
       description: 'Start syncing your emails and get organized',
       component: StepSync,
       icon: (
@@ -83,13 +151,41 @@ export default function OnboardingPage() {
   const CurrentStepComponent = currentStepData?.component;
   const progress = (currentStep / totalSteps) * 100;
 
-  const handleNext = (): void => {
+  // const handleNext = async (): Promise<void> => {
+  //   if (currentStep < totalSteps) {
+  //     setCurrentStep(prev => prev + 1);
+  //     setIsStepComplete(false);
+  //   } else {
+  //     // Submit all data to API
+  //     console.log('Final onboarding data:', onboardingData);
+  //     try {
+  //       // await onboarding.submitData(onboardingData);
+  //       navigate('/dashboard');
+  //     } catch (error) {
+  //       console.error('Error submitting onboarding data:', error);
+  //     }
+  //   }
+  // };
+  const handleNext = async (): Promise<void> => {
     if (currentStep < totalSteps) {
       setCurrentStep(prev => prev + 1);
+      setIsStepComplete(false);
     } else {
-      navigate('/dashboard');
+      console.log('Final onboarding data:', onboardingData);
+
+      try {
+        await onboarding.saveUserPreference({
+          user_id: state.user?.id,
+          data: onboardingData
+        });
+
+        navigate('/dashboard');
+      } catch (error) {
+        console.error('Error submitting onboarding data:', error);
+      }
     }
   };
+
 
   const handlePrevious = (): void => {
     if (currentStep > 1) {
@@ -127,7 +223,7 @@ export default function OnboardingPage() {
             </span>
           </div>
           <div className="w-full bg-gray-200 rounded-full h-2">
-            <div 
+            <div
               className="bg-gradient-to-r from-blue-500 to-blue-600 h-2 rounded-full transition-all duration-300"
               style={{ width: `${progress}%` }}
             />
@@ -151,7 +247,7 @@ export default function OnboardingPage() {
           <div className="hidden lg:block lg:w-80 flex-shrink-0">
             <div className="bg-white rounded-xl shadow-sm p-6 sticky top-8">
               <h3 className="text-lg font-semibold text-gray-900 mb-6">Setup Progress</h3>
-              
+
               {/* Progress indicator */}
               <div className="mb-6">
                 <div className="flex justify-between text-sm mb-2">
@@ -159,7 +255,7 @@ export default function OnboardingPage() {
                   <span className="font-medium text-gray-900">{Math.round(progress)}%</span>
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div 
+                  <div
                     className="bg-gradient-to-r from-blue-500 to-blue-600 h-2 rounded-full transition-all duration-300"
                     style={{ width: `${progress}%` }}
                   />
@@ -168,27 +264,25 @@ export default function OnboardingPage() {
 
               {/* Steps */}
               <div className="space-y-4">
-                {steps.map((step, index) => (
+                {steps.map((step) => (
                   <button
                     key={step.id}
                     onClick={() => handleStepClick(step.id)}
-                    className={`w-full text-left p-4 rounded-lg transition-all ${
-                      step.id === currentStep
-                        ? 'bg-blue-50 border-2 border-blue-500'
-                        : step.id < currentStep
+                    className={`w-full text-left p-4 rounded-lg transition-all ${step.id === currentStep
+                      ? 'bg-blue-50 border-2 border-blue-500'
+                      : step.id < currentStep
                         ? 'bg-gray-50 hover:bg-gray-100 cursor-pointer'
                         : 'bg-white cursor-not-allowed opacity-60'
-                    }`}
+                      }`}
                     disabled={step.id > currentStep}
                   >
                     <div className="flex items-start space-x-3">
-                      <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center ${
-                        step.id < currentStep
-                          ? 'bg-green-100 text-green-600'
-                          : step.id === currentStep
+                      <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center ${step.id < currentStep
+                        ? 'bg-green-100 text-green-600'
+                        : step.id === currentStep
                           ? 'bg-blue-100 text-blue-600'
                           : 'bg-gray-100 text-gray-400'
-                      }`}>
+                        }`}>
                         {step.id < currentStep ? (
                           <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
                             <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
@@ -199,18 +293,16 @@ export default function OnboardingPage() {
                       </div>
                       <div className="flex-1">
                         <div className="flex items-center">
-                          <h4 className={`text-sm font-medium ${
-                            step.id === currentStep ? 'text-blue-900' : 'text-gray-900'
-                          }`}>
+                          <h4 className={`text-sm font-medium ${step.id === currentStep ? 'text-blue-900' : 'text-gray-900'
+                            }`}>
                             {step.title}
                           </h4>
                           {step.id < currentStep && (
                             <span className="ml-2 text-xs text-green-600 font-medium">✓ Complete</span>
                           )}
                         </div>
-                        <p className={`text-xs mt-1 ${
-                          step.id === currentStep ? 'text-blue-700' : 'text-gray-500'
-                        }`}>
+                        <p className={`text-xs mt-1 ${step.id === currentStep ? 'text-blue-700' : 'text-gray-500'
+                          }`}>
                           {step.description}
                         </p>
                       </div>
@@ -253,7 +345,13 @@ export default function OnboardingPage() {
 
               {/* Step Component */}
               <div className="p-6 sm:p-8">
-                {CurrentStepComponent && <CurrentStepComponent />}
+                {CurrentStepComponent && (
+                  <CurrentStepComponent
+                    data={onboardingData}
+                    updateData={updateData}
+                    onStepComplete={setIsStepComplete}
+                  />
+                )}
               </div>
 
               {/* Navigation */}
@@ -269,7 +367,7 @@ export default function OnboardingPage() {
                     </svg>
                     Previous
                   </button>
-                  
+
                   <div className="order-1 sm:order-2 flex items-center justify-center sm:hidden">
                     <span className="text-sm text-gray-500">
                       Step {currentStep} of {totalSteps}
@@ -278,7 +376,8 @@ export default function OnboardingPage() {
 
                   <button
                     onClick={handleNext}
-                    className="order-3 px-6 py-3 text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg hover:from-blue-700 hover:to-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all flex items-center justify-center"
+                    disabled={!isStepComplete}
+                    className="order-3 px-6 py-3 text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg hover:from-blue-700 hover:to-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {currentStep === totalSteps ? 'Complete Setup' : 'Continue'}
                     <svg className="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -317,3 +416,7 @@ export default function OnboardingPage() {
     </div>
   );
 }
+
+
+
+

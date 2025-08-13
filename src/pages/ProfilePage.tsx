@@ -92,19 +92,19 @@ export default function ProfilePage({ embedded = false }: { embedded?: boolean }
     }
   };
 
-  const handleSyncAccount = async (accountId: string): Promise<void> => {
-    setIsSyncing(accountId);
-    try {
-      await mail.sync({ accountId });
-      actions.setError(null);
-      // Show success message or update UI
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      actions.setError(errorMessage);
-    } finally {
-      setIsSyncing(null);
-    }
-  };
+  // const handleSyncAccount = async (accountId: string): Promise<void> => {
+  //   setIsSyncing(accountId);
+  //   try {
+  //     await mail.sync({ accountId });
+  //     actions.setError(null);
+  //     // Show success message or update UI
+  //   } catch (error) {
+  //     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+  //     actions.setError(errorMessage);
+  //   } finally {
+  //     setIsSyncing(null);
+  //   }
+  // };
 
   const handleSaveName = async (): Promise<void> => {
     if (!state.user?.id) return;
@@ -253,7 +253,7 @@ export default function ProfilePage({ embedded = false }: { embedded?: boolean }
                         <Button
                           variant="secondary"
                           size="sm"
-                          onClick={() => handleSyncAccount(account.id)}
+                          // onClick={() => handleSyncAccount(account.id)}
                           disabled={isSyncing === account.id}
                         >
                           {isSyncing === account.id ? 'Syncing...' : 'Sync Now'}

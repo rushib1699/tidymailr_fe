@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
+import { StepProps } from '../../pages/OnboardingPage';
 
 interface Calendar {
   id: string;
@@ -16,7 +17,7 @@ interface ConnectedAccount {
   provider: string;
 }
 
-export default function StepCalendar() {
+export default function StepCalendar({ data, updateData, onStepComplete }: StepProps) {
   const { state, actions } = useApp();
   const [connectedAccounts, setConnectedAccounts] = useState<ConnectedAccount[]>([]);
   const [selectedCalendar, setSelectedCalendar] = useState<string | undefined>(
@@ -48,6 +49,25 @@ export default function StepCalendar() {
 
   const handleCalendarSelect = (calendar: Calendar) => {
     actions.setSelectedCalendar(calendar);
+    // Save to onboarding data
+    updateData({ primary_calendar: [calendar] });
+    onStepComplete(true);
+  };
+
+  const handleAccountSelect = (accountId: string) => {
+    setSelectedCalendar(accountId);
+
+    const account = connectedAccounts.find(acc => acc.id === accountId);
+    if (account) {
+      const calendarData = { id: accountId, name: account.email };
+      // Store the account selection in global state
+      actions.setSelectedCalendar(calendarData);
+      // Save to onboarding data
+      updateData({ primary_calendar: [calendarData] });
+    }
+
+    // Immediately mark the step as complete
+    onStepComplete(true);
   };
 
   return (
@@ -81,7 +101,7 @@ export default function StepCalendar() {
                   </button>
                 </div>
               ) : (
-                <Select value={selectedCalendar} onValueChange={setSelectedCalendar}>
+                <Select value={selectedCalendar} onValueChange={handleAccountSelect}>
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder="Select a calendar account" />
                   </SelectTrigger>

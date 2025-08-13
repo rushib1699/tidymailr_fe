@@ -1,15 +1,47 @@
+import { useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
 import TimePicker from '../TimePicker';
+import { StepProps } from '../../pages/OnboardingPage';
 
-export default function StepHours() {
+export default function StepHours({ updateData, onStepComplete }: StepProps) {
   const { state, actions } = useApp();
 
+  // Mark step as complete when component mounts (since it has default values)
+  useEffect(() => {
+    onStepComplete(true);
+  }, []);
+
+  // Helper function to convert HH:MM to HHMM format
+  const convertTo24HourFormat = (timeString: string): string => {
+    return timeString.replace(':', '');
+  };
+
+
+
   const handleWorkingHoursChange = (field: 'start' | 'end', value: string): void => {
+    // Update AppContext for UI display
     actions.updateWorkingHours({ [field]: value });
+
+    // Update onboarding data in 24-hour format
+    const formattedValue = convertTo24HourFormat(value);
+    if (field === 'start') {
+      updateData({ working_hours: formattedValue });
+    } else {
+      updateData({ working_hours_end: formattedValue });
+    }
   };
 
   const handleBreakHoursChange = (field: 'start' | 'end', value: string): void => {
+    // Update AppContext for UI display
     actions.updateBreakHours({ [field]: value });
+
+    // Update onboarding data in 24-hour format
+    const formattedValue = convertTo24HourFormat(value);
+    if (field === 'start') {
+      updateData({ break_hours: formattedValue });
+    } else {
+      updateData({ break_hours_end: formattedValue });
+    }
   };
 
   return (
