@@ -4,6 +4,7 @@ import { onboarding } from '../../services/api';
 interface Option {
     id: number;
     option_code: string;
+    option_text: string;
     tag_id: number;
     category_id: number;
     score: number;
@@ -46,11 +47,23 @@ export default function StepQuestionnaire() {
         fetchQuestions();
     }, []);
 
+    const OPTION_ORDER = ['A', 'B', 'C', 'D'] as const;
+    const sortByOptionCode = (a: Option, b: Option) => {
+        const ai = OPTION_ORDER.indexOf(a.option_code as any);
+        const bi = OPTION_ORDER.indexOf(b.option_code as any);
+        if (ai === -1 || bi === -1) return a.option_code.localeCompare(b.option_code);
+        return ai - bi;
+    };
+
     const fetchQuestions = async () => {
         try {
             setLoading(true);
             const response = await onboarding.getQuestions();
-            setQuestions(Array.isArray(response) ? response : []);
+            const normalized = (Array.isArray(response) ? response : []).map((q: Question) => ({
+                ...q,
+                options: [...(q.options ?? [])].sort(sortByOptionCode),
+            }));
+            setQuestions(normalized);
         } catch (error) {
             console.error('Error fetching questions:', error);
         } finally {
@@ -202,9 +215,7 @@ export default function StepQuestionnaire() {
                             {(question.options ?? []).map((option) => (
                                 <label
                                     key={option.id}
-                                    className={`relative flex items-start p-4 border rounded-lg cursor-pointer transition-all hover:bg-gray-50 ${answers[question.id]?.id === option.id
-                                        ? 'border-blue-500 bg-blue-50'
-                                        : 'border-gray-200'
+                                    className={`relative flex items-start p-4 border rounded-lg cursor-pointer transition-all hover:bg-gray-50 ${answers[question.id]?.id === option.id ? 'border-blue-500 bg-blue-50' : 'border-gray-200'
                                         }`}
                                 >
                                     <input
@@ -216,16 +227,14 @@ export default function StepQuestionnaire() {
                                         className="sr-only"
                                     />
                                     <div className="flex items-center">
-                                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${answers[question.id]?.id === option.id
-                                            ? 'border-blue-500 bg-blue-500'
-                                            : 'border-gray-300'
-                                            }`}>
-                                            {answers[question.id]?.id === option.id && (
-                                                <div className="w-2 h-2 bg-white rounded-full" />
-                                            )}
+                                        <div
+                                            className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${answers[question.id]?.id === option.id ? 'border-blue-500 bg-blue-500' : 'border-gray-300'
+                                                }`}
+                                        >
+                                            {answers[question.id]?.id === option.id && <div className="w-2 h-2 bg-white rounded-full" />}
                                         </div>
                                         <span className="ml-3 text-gray-700">
-                                            Option {option.option_code}
+                                            {option.option_code}: {option.option_text}
                                         </span>
                                     </div>
                                 </label>
@@ -260,3 +269,4 @@ export default function StepQuestionnaire() {
         </div>
     );
 }
+
