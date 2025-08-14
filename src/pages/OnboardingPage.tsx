@@ -44,6 +44,7 @@ export interface OnboardingData {
   working_hours_end: string; // 24-hour format string like "1700"
   break_hours: string; // 24-hour format string like "1200"
   break_hours_end: string; // 24-hour format string like "1300"
+  working_days: string[];
   primary_calendar: any[];
   questionnaire: QuestionnaireItem[];
   score: {
@@ -75,6 +76,7 @@ export default function OnboardingPage() {
     working_hours_end: "1700", // Default 5:00 PM
     break_hours: "1200", // Default 12:00 PM
     break_hours_end: "1300", // Default 1:00 PM
+    working_days: ["Mon", "Tue", "Wed", "Thu", "Fri"], // <-- Default M-F
     primary_calendar: [],
     questionnaire: [],
     score: {
@@ -82,7 +84,7 @@ export default function OnboardingPage() {
       importance_bias: 0,
       rigidity: 0
     },
-    user_timezone: Intl.DateTimeFormat().resolvedOptions().timeZone // auto-detect browser timezone
+    user_timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
   });
 
   const updateData = (updates: Partial<OnboardingData>) => {

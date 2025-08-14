@@ -208,7 +208,16 @@ export default function StepQuestionnaire({ updateData, onStepComplete }: StepPr
                             {question.question_text}
                         </h4>
                         <div className="space-y-3">
-                            {(question.options ?? []).map((option) => (
+                            {(question.options ?? [])
+                                .sort((a, b) => {
+                                    // Sort options by option_code to ensure consistent ordering
+                                    if (a.option_code && b.option_code) {
+                                        return a.option_code.localeCompare(b.option_code);
+                                    }
+                                    // Fallback to id if option_code is not available
+                                    return a.id - b.id;
+                                })
+                                .map((option) => (
                                 <label
                                     key={option.id}
                                     className={`relative flex items-start p-4 border rounded-lg cursor-pointer transition-all hover:bg-gray-50 ${answers[question.id]?.id === option.id
@@ -234,7 +243,7 @@ export default function StepQuestionnaire({ updateData, onStepComplete }: StepPr
                                             )}
                                         </div>
                                         <span className="ml-3 text-gray-700">
-                                            Option {option.option_text}
+                                            {option.option_code} : {option.option_text}
                                         </span>
                                     </div>
                                 </label>

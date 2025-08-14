@@ -41,7 +41,7 @@ export default function LoginPage() {
       actions.setConnectedAccount('personal', hasPersonal);
       actions.setConnectedAccount('workspace', hasWorkspace);
 
-      if (!hasPersonal || !hasWorkspace) {
+      if (!hasPersonal && !hasWorkspace) {
         navigate('/connect-accounts');
       } else {
         navigate('/dashboard');

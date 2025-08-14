@@ -41,6 +41,7 @@ interface OnboardingData {
   filters: OnboardingFilters;
   selectedCalendar: Calendar | null;
   workingHours: WorkingHours;
+  workingDays: string[];
   break: WorkingHours;
 }
 
@@ -61,6 +62,7 @@ interface AppActions {
   setSelectedCalendar: (calendar: Calendar | null) => void;
   updateWorkingHours: (hours: Partial<WorkingHours>) => void;
   updateBreakHours: (hours: Partial<WorkingHours>) => void;
+  updateWorkingDays: (days: string[]) => void; // ✅ Added
   setEmails: (emails: any[]) => void;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
@@ -94,11 +96,13 @@ const initialState: AppState = {
       start: '09:00',
       end: '17:00',
     },
+    workingDays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'], // ✅ Default M–F
     break: {
       start: '12:00',
       end: '13:00',
     },
   },
+
   emails: [],
   isLoading: false,
   error: null,
@@ -110,6 +114,7 @@ type AppAction =
   | { type: 'UPDATE_ONBOARDING_FILTERS'; payload: Partial<OnboardingFilters> }
   | { type: 'SET_SELECTED_CALENDAR'; payload: Calendar | null }
   | { type: 'UPDATE_WORKING_HOURS'; payload: Partial<WorkingHours> }
+  | { type: 'UPDATE_WORKING_DAYS'; payload: string[] } // ✅ Added
   | { type: 'UPDATE_BREAK_HOURS'; payload: Partial<WorkingHours> }
   | { type: 'SET_EMAILS'; payload: any[] }
   | { type: 'SET_LOADING'; payload: boolean }
@@ -173,6 +178,14 @@ function appReducer(state: AppState, action: AppAction): AppState {
           },
         },
       };
+    case 'UPDATE_WORKING_DAYS': // ✅ Added
+      return {
+        ...state,
+        onboardingData: {
+          ...state.onboardingData,
+          workingDays: action.payload,
+        },
+      };
     case 'SET_EMAILS':
       return {
         ...state,
@@ -226,6 +239,7 @@ export function AppProvider({ children }: AppProviderProps) {
             ...initialState.onboardingData.workingHours,
             ...(saved.onboardingData?.workingHours ?? {}),
           },
+          workingDays: saved.onboardingData?.workingDays ?? initialState.onboardingData.workingDays, // ✅ Hydrate working days
           break: {
             ...initialState.onboardingData.break,
             ...(saved.onboardingData?.break ?? {}),
@@ -250,11 +264,18 @@ export function AppProvider({ children }: AppProviderProps) {
 
   const actions: AppActions = {
     setUser: (user: User | null) => dispatch({ type: 'SET_USER', payload: user }),
-    setConnectedAccount: (type: 'workspace' | 'personal', connected: boolean) => dispatch({ type: 'SET_CONNECTED_ACCOUNT', payload: { type, connected } }),
-    updateOnboardingFilters: (filters: Partial<OnboardingFilters>) => dispatch({ type: 'UPDATE_ONBOARDING_FILTERS', payload: filters }),
-    setSelectedCalendar: (calendar: Calendar | null) => dispatch({ type: 'SET_SELECTED_CALENDAR', payload: calendar }),
-    updateWorkingHours: (hours: Partial<WorkingHours>) => dispatch({ type: 'UPDATE_WORKING_HOURS', payload: hours }),
-    updateBreakHours: (hours: Partial<WorkingHours>) => dispatch({ type: 'UPDATE_BREAK_HOURS', payload: hours }),
+    setConnectedAccount: (type: 'workspace' | 'personal', connected: boolean) =>
+      dispatch({ type: 'SET_CONNECTED_ACCOUNT', payload: { type, connected } }),
+    updateOnboardingFilters: (filters: Partial<OnboardingFilters>) =>
+      dispatch({ type: 'UPDATE_ONBOARDING_FILTERS', payload: filters }),
+    setSelectedCalendar: (calendar: Calendar | null) =>
+      dispatch({ type: 'SET_SELECTED_CALENDAR', payload: calendar }),
+    updateWorkingHours: (hours: Partial<WorkingHours>) =>
+      dispatch({ type: 'UPDATE_WORKING_HOURS', payload: hours }),
+    updateBreakHours: (hours: Partial<WorkingHours>) =>
+      dispatch({ type: 'UPDATE_BREAK_HOURS', payload: hours }),
+    updateWorkingDays: (days: string[]) => // ✅ New action
+      dispatch({ type: 'UPDATE_WORKING_DAYS', payload: days }),
     setEmails: (emails: any[]) => dispatch({ type: 'SET_EMAILS', payload: emails }),
     setLoading: (loading: boolean) => dispatch({ type: 'SET_LOADING', payload: loading }),
     setError: (error: string | null) => dispatch({ type: 'SET_ERROR', payload: error }),

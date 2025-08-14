@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import TimePicker from '../TimePicker';
 import { StepProps } from '../../pages/OnboardingPage';
@@ -6,23 +6,20 @@ import { StepProps } from '../../pages/OnboardingPage';
 export default function StepHours({ updateData, onStepComplete }: StepProps) {
   const { state, actions } = useApp();
 
-  // Mark step as complete when component mounts (since it has default values)
+  const [workingDays, setWorkingDays] = useState<string[]>(
+    state.onboardingData.workingDays || []
+  );
+
   useEffect(() => {
     onStepComplete(true);
   }, []);
 
-  // Helper function to convert HH:MM to HHMM format
   const convertTo24HourFormat = (timeString: string): string => {
     return timeString.replace(':', '');
   };
 
-
-
   const handleWorkingHoursChange = (field: 'start' | 'end', value: string): void => {
-    // Update AppContext for UI display
     actions.updateWorkingHours({ [field]: value });
-
-    // Update onboarding data in 24-hour format
     const formattedValue = convertTo24HourFormat(value);
     if (field === 'start') {
       updateData({ working_hours: formattedValue });
@@ -32,10 +29,7 @@ export default function StepHours({ updateData, onStepComplete }: StepProps) {
   };
 
   const handleBreakHoursChange = (field: 'start' | 'end', value: string): void => {
-    // Update AppContext for UI display
     actions.updateBreakHours({ [field]: value });
-
-    // Update onboarding data in 24-hour format
     const formattedValue = convertTo24HourFormat(value);
     if (field === 'start') {
       updateData({ break_hours: formattedValue });
@@ -44,14 +38,26 @@ export default function StepHours({ updateData, onStepComplete }: StepProps) {
     }
   };
 
+  const toggleDay = (day: string) => {
+    const newDays = workingDays.includes(day)
+      ? workingDays.filter(d => d !== day)
+      : [...workingDays, day];
+
+    setWorkingDays(newDays);
+    updateData({ working_days: newDays });
+  };
+
   return (
     <div className="space-y-8">
       <div>
         <h2 className="text-2xl font-bold text-gray-900 mb-2">Working Hours</h2>
-        <p className="text-gray-600">Set your working hours and break times for optimal email processing.</p>
+        <p className="text-gray-600">
+          Set your working hours, days, and break times for optimal email processing.
+        </p>
       </div>
 
       <div className="space-y-6">
+        {/* Working Hours */}
         <div className="bg-gray-50 p-6 rounded-lg">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Working Hours</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -70,6 +76,7 @@ export default function StepHours({ updateData, onStepComplete }: StepProps) {
           </div>
         </div>
 
+        {/* Break Time */}
         <div className="bg-gray-50 p-6 rounded-lg">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Break Time</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -88,15 +95,46 @@ export default function StepHours({ updateData, onStepComplete }: StepProps) {
           </div>
         </div>
 
+        {/* Working Days */}
+        <div className="bg-gray-50 p-6 rounded-lg">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Working Days</h3>
+          <div className="flex flex-wrap gap-2">
+            {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(day => (
+              <button
+                key={day}
+                onClick={() => toggleDay(day)}
+                type="button"
+                className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${
+                  workingDays.includes(day)
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+                }`}
+              >
+                {day}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Tip Box */}
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
           <div className="flex">
-            <svg className="w-5 h-5 text-blue-400 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+            <svg
+              className="w-5 h-5 text-blue-400 mt-0.5"
+              fill="currentColor"
+              viewBox="0 0 20 20"
+            >
+              <path
+                fillRule="evenodd"
+                d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                clipRule="evenodd"
+              />
             </svg>
             <div className="ml-3">
               <p className="text-sm text-blue-700">
-                <strong>Tip:</strong> Emails will be processed during your working hours, excluding break time. 
-                You can adjust these settings later in your dashboard.
+                <strong>Tip:</strong> Emails will be processed during your working hours
+                on selected days, excluding break time. You can adjust these settings
+                later in your dashboard.
               </p>
             </div>
           </div>

@@ -14,8 +14,8 @@ export default function StepSync({ data, updateData, onStepComplete }: StepProps
   const [isLoading, setIsLoading] = useState(false);
   const [syncStatus, setSyncStatus] = useState<SyncStatus | null>(null);
 
- 
-   const handleSync = async (): Promise<void> => {
+
+  const handleSync = async (): Promise<void> => {
     setIsLoading(true);
     actions.setError(null);
     setSyncStatus(null);
@@ -110,6 +110,27 @@ export default function StepSync({ data, updateData, onStepComplete }: StepProps
               {data.break_hours ? `${data.break_hours.slice(0, 2)}:${data.break_hours.slice(2)}` : '12:00'} - {data.break_hours_end ? `${data.break_hours_end.slice(0, 2)}:${data.break_hours_end.slice(2)}` : '13:00'}
             </span>
           </div>
+
+          <div>
+            <span className="font-medium text-blue-900">Working Days:</span>
+            {data.working_days && data.working_days.length > 0 ? (
+              <div className="flex flex-wrap gap-1 mt-1">
+                {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(day => (
+                  <span
+                    key={day}
+                    className={`px-2 py-1 rounded-md text-xs ${data.working_days.includes(day)
+                        ? 'bg-blue-100 text-blue-800 font-medium'
+                        : 'bg-gray-100 text-gray-500'
+                      }`}
+                  >
+                    {day}
+                  </span>
+                ))}
+              </div>
+            ) : (
+              <span className="ml-2 text-gray-500 text-xs">No days selected</span>
+            )}
+          </div>
           <div>
             <span className="font-medium text-blue-900">Email Limit:</span>
             <span className="ml-2 text-blue-700">200 emails per connected account</span>
@@ -119,8 +140,8 @@ export default function StepSync({ data, updateData, onStepComplete }: StepProps
 
       {syncStatus && (
         <div className={`border rounded-lg p-4 ${syncStatus.type === 'success'
-            ? 'bg-green-50 border-green-200'
-            : 'bg-red-50 border-red-200'
+          ? 'bg-green-50 border-green-200'
+          : 'bg-red-50 border-red-200'
           }`}>
           <div className="flex">
             <div className="flex-shrink-0">
