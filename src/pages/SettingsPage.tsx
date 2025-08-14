@@ -111,22 +111,8 @@ export default function SettingsPage() {
         if (seeded.length > 0) {
             setConnectedAccounts(seeded);
             setIsLoadingAccounts(false);
-        } else {
-            loadConnectedAccounts();
-        }
+        } 
     }, [state.user?.google_email_business, state.user?.google_email_personal]);
-
-    const loadConnectedAccounts = async (): Promise<void> => {
-        try {
-            const response = await accounts.getConnectedAccounts();
-            setConnectedAccounts(response.accounts || []);
-        } catch (error) {
-            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-            actions.setError(errorMessage);
-        } finally {
-            setIsLoadingAccounts(false);
-        }
-    };
 
     const handleScheduleComplete = () => {
         setIsOnboardingComplete(true);
@@ -613,11 +599,11 @@ export default function SettingsPage() {
                                             {section.icon}
                                         </span>
                                         {section.title}
-                                        {section.id === 'schedule' && !isOnboardingComplete && (
+                                        {/* {section.id === 'schedule' && !isOnboardingComplete && (
                                             <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
                                                 Incomplete
                                             </span>
-                                        )}
+                                        )} */}
                                     </button>
                                 ))}
                             </nav>

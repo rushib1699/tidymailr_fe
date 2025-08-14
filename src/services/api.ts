@@ -194,11 +194,37 @@ export const tasks = {
 
       const data = response.data;
 
-      // Map backend tasks (numeric priority, boolean completed) to frontend shape
-      const priorityNumToText = (p?: number): 'high' | 'medium' | 'low' => {
-        if (p === 1) return 'high';
-        if (p === 2) return 'medium';
+      // Map backend tasks (priority can be string or number, boolean completed) to frontend shape
+      const priorityToText = (p?: number | string): 'high' | 'medium' | 'low' => {
+        // Handle string priorities (current API format)
+        if (typeof p === 'string') {
+          if (p === 'high') return 'high';
+          if (p === 'medium') return 'medium';
+          if (p === 'low') return 'low';
+        }
+        // Handle numeric priorities (legacy format)
+        if (typeof p === 'number') {
+          if (p === 1) return 'high';
+          if (p === 2) return 'medium';
+          if (p === 3) return 'low';
+        }
         return 'low';
+      };
+
+      // Map status from API format to frontend format
+      const statusToText = (status?: string | number | boolean): 'pending' | 'in-progress' | 'completed' => {
+        // Handle boolean completed field (legacy)
+        if (typeof status === 'boolean') {
+          return status ? 'completed' : 'pending';
+        }
+        // Handle numeric status (current API format: 0=pending, 1=in-progress, 2=completed)
+        if (typeof status === 'string' || typeof status === 'number') {
+          const numStatus = typeof status === 'string' ? parseInt(status, 10) : status;
+          if (numStatus === 0) return 'pending';
+          if (numStatus === 1) return 'in-progress';
+          if (numStatus === 2) return 'completed';
+        }
+        return 'pending';
       };
 
       const mapped = Array.isArray(data)
@@ -211,8 +237,8 @@ export const tasks = {
             ),
             title: t.title,
             description: t.description ?? undefined,
-            priority: priorityNumToText(t.priority),
-            status: t.completed ? 'completed' : 'pending',
+            priority: priorityToText(t.priority),
+            status: statusToText(t.status ?? t.completed),
             createdAt: t.created_at ?? t.createdAt ?? undefined,
           }))
         : Array.isArray(data?.tasks)
@@ -225,8 +251,8 @@ export const tasks = {
               ),
               title: t.title,
               description: t.description ?? undefined,
-              priority: priorityNumToText(t.priority),
-              status: t.completed ? 'completed' : 'pending',
+              priority: priorityToText(t.priority),
+              status: statusToText(t.status ?? t.completed),
               createdAt: t.created_at ?? t.createdAt ?? undefined,
             }))
           : [];
@@ -252,12 +278,19 @@ export const tasks = {
       return 3;
     };
 
+    const statusTextToNum = (s: 'pending' | 'in-progress' | 'completed'): number => {
+      if (s === 'pending') return 0;
+      if (s === 'in-progress') return 1;
+      if (s === 'completed') return 2;
+      return 0;
+    };
+
     const payload = {
       title: taskData.title,
       user_id: numericUserId,
       sourceEmailId: taskData.sourceEmailId,
       description: taskData.description ?? '',
-      completed: taskData.status === 'completed',
+      status: statusTextToNum(taskData.status),
       priority: priorityTextToNum(taskData.priority),
       due_date: (taskData as any).due_date, // optional
     };
@@ -277,10 +310,7 @@ export const tasks = {
         title: created?.title ?? taskData.title,
         description: created?.description ?? taskData.description,
         priority: taskData.priority,
-        status: (created?.completed ? 'completed' : 'pending') as
-          | 'pending'
-          | 'in-progress'
-          | 'completed',
+        status: taskData.status, // Use the original status from taskData
         createdAt:
           created?.created_at ?? created?.createdAt ?? new Date().toISOString(),
       };
@@ -328,6 +358,13 @@ export const tasks = {
       return 3;
     };
 
+    const statusTextToNum = (s: 'pending' | 'in-progress' | 'completed'): number => {
+      if (s === 'pending') return 0;
+      if (s === 'in-progress') return 1;
+      if (s === 'completed') return 2;
+      return 0;
+    };
+
     // Merge existing task data with updates
     const payload = {
       id: numericTaskId,
@@ -336,9 +373,9 @@ export const tasks = {
       sourceEmailId:
         updates.sourceEmailId ?? (existingTask as any).sourceEmailId,
       description: updates.description ?? existingTask.description ?? '',
-      completed: updates.status
-        ? updates.status === 'completed'
-        : existingTask.status === 'completed',
+      status: updates.status
+        ? statusTextToNum(updates.status)
+        : statusTextToNum(existingTask.status),
       priority: updates.priority
         ? priorityTextToNum(updates.priority)
         : priorityTextToNum(existingTask.priority),
@@ -357,11 +394,7 @@ export const tasks = {
         title: updated?.title ?? payload.title,
         description: updated?.description ?? payload.description,
         priority: updates.priority ?? existingTask.priority,
-        status: (updated?.completed
-          ? 'completed'
-          : existingTask.status !== 'completed'
-            ? existingTask.status
-            : 'pending') as 'pending' | 'in-progress' | 'completed',
+        status: updates.status ?? existingTask.status,
         createdAt:
           updated?.created_at ?? updated?.createdAt ?? existingTask.createdAt,
       };
