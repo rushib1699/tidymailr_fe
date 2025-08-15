@@ -177,7 +177,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Error Display */}
-        {state.error && (
+        {/* {state.error && (
           <div className="mb-6 bg-red-50 border border-red-200 rounded-md p-4">
             <div className="flex">
               <svg className="w-5 h-5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
@@ -188,7 +188,7 @@ export default function DashboardPage() {
               </div>
             </div>
           </div>
-        )}
+        )} */}
 
         {/* Email List */}
         <MailSyncList emails={state.emails} />

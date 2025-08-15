@@ -12,9 +12,9 @@ if (!rootElement) {
 }
 
 ReactDOM.createRoot(rootElement).render(
-  <React.StrictMode>
+  // <React.StrictMode>
     <AppProvider>
       <RouterProvider router={router} />
     </AppProvider>
-  </React.StrictMode>,
+  // </React.StrictMode>,
 )

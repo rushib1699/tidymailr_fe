@@ -178,6 +178,39 @@ export const accounts = {
       throw new Error('Failed to disconnect Google account');
     }
   },
+
+  async getUserPreference({
+    user_id,
+  }: {
+    user_id: string | number | undefined;
+  }) {
+    try {
+      const payload = { user_id };
+      const response = await axiosInstance.post(
+        '/user/getuserPreference',
+        payload,
+        {}
+      );
+
+      // Parse the JSON string in the data field
+      if (
+        response.data &&
+        response.data.data &&
+        typeof response.data.data === 'string'
+      ) {
+        try {
+          response.data.data = JSON.parse(response.data.data);
+        } catch (parseError) {
+          console.error('Failed to parse user preference data:', parseError);
+          // Keep the original string if parsing fails
+        }
+      }
+
+      return response.data;
+    } catch (error) {
+      throw new Error('Failed to get user preferences');
+    }
+  },
 };
 
 export const tasks = {
@@ -195,7 +228,9 @@ export const tasks = {
       const data = response.data;
 
       // Map backend tasks (priority can be string or number, boolean completed) to frontend shape
-      const priorityToText = (p?: number | string): 'high' | 'medium' | 'low' => {
+      const priorityToText = (
+        p?: number | string
+      ): 'high' | 'medium' | 'low' => {
         // Handle string priorities (current API format)
         if (typeof p === 'string') {
           if (p === 'high') return 'high';
@@ -212,14 +247,17 @@ export const tasks = {
       };
 
       // Map status from API format to frontend format
-      const statusToText = (status?: string | number | boolean): 'pending' | 'in-progress' | 'completed' => {
+      const statusToText = (
+        status?: string | number | boolean
+      ): 'pending' | 'in-progress' | 'completed' => {
         // Handle boolean completed field (legacy)
         if (typeof status === 'boolean') {
           return status ? 'completed' : 'pending';
         }
         // Handle numeric status (current API format: 0=pending, 1=in-progress, 2=completed)
         if (typeof status === 'string' || typeof status === 'number') {
-          const numStatus = typeof status === 'string' ? parseInt(status, 10) : status;
+          const numStatus =
+            typeof status === 'string' ? parseInt(status, 10) : status;
           if (numStatus === 0) return 'pending';
           if (numStatus === 1) return 'in-progress';
           if (numStatus === 2) return 'completed';
@@ -278,7 +316,9 @@ export const tasks = {
       return 3;
     };
 
-    const statusTextToNum = (s: 'pending' | 'in-progress' | 'completed'): number => {
+    const statusTextToNum = (
+      s: 'pending' | 'in-progress' | 'completed'
+    ): number => {
       if (s === 'pending') return 0;
       if (s === 'in-progress') return 1;
       if (s === 'completed') return 2;
@@ -358,7 +398,9 @@ export const tasks = {
       return 3;
     };
 
-    const statusTextToNum = (s: 'pending' | 'in-progress' | 'completed'): number => {
+    const statusTextToNum = (
+      s: 'pending' | 'in-progress' | 'completed'
+    ): number => {
       if (s === 'pending') return 0;
       if (s === 'in-progress') return 1;
       if (s === 'completed') return 2;
@@ -458,33 +500,31 @@ export const onboarding = {
     data,
     user_id,
   }: {
-    data: any,
+    data: any;
     user_id: string | number | undefined;
   }) {
     try {
       const payload = { user_id, data };
 
-      const response = await axiosInstance.post('/user/userPreference', payload, {
-        timeout: 120000 // extend for long processing
-      });
+      const response = await axiosInstance.post(
+        '/user/userPreference',
+        payload,
+        {
+          timeout: 120000, // extend for long processing
+        }
+      );
 
       return response.data;
     } catch (error) {
       throw new Error('Failed to save user preferences');
     }
-  }
+  },
 };
 
 export const plans = {
-  async getPlans(payload: {
-    user_id: number | string;
-    date: string;
-  }) {
+  async getPlans(payload: { user_id: number | string; date: string }) {
     try {
-      const response = await axiosInstance.post(
-        '/plan/getPlan',
-        payload
-      );
+      const response = await axiosInstance.post('/plan/getPlan', payload);
       return response.data;
     } catch (error) {
       throw new Error('Failed to fetch plans');

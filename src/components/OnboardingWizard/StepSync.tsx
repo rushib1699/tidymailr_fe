@@ -22,7 +22,7 @@ export default function StepSync({ data, updateData, onStepComplete }: StepProps
 
     try {
       // Prepare the payload for SyncEmail
-      const user_emails = [state.user?.google_email_business, state.user?.google_email_personal];
+      const user_emails = [state.user?.google_email_business,state.user?.google_email_personal].filter(Boolean);
       const calendar_email = state.onboardingData?.selectedCalendar?.name;
       const user_id = state.user?.id;
       onStepComplete(true);

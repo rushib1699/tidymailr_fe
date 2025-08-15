@@ -32,6 +32,8 @@ export default function SettingsPage() {
     const [onboardingStep, setOnboardingStep] = useState(1);
     const [connectedAccounts, setConnectedAccounts] = useState<ConnectedAccount[]>([]);
     const [isLoadingAccounts, setIsLoadingAccounts] = useState(true);
+    const [isLoadingPreferences, setIsLoadingPreferences] = useState(true);
+    const [userPreferences, setUserPreferences] = useState<any>(null);
 
     // Connected accounts UI now handled by embedded ProfilePage
 
@@ -75,44 +77,91 @@ export default function SettingsPage() {
         }
     ];
 
-    // Schedule setup form state
+    // Schedule setup form state - will be populated from API
     const [workingHours, setWorkingHours] = useState({
-        start: '09:00',
-        end: '17:00',
+        start: '',
+        end: '',
         timezone: 'America/New_York',
-        workingDays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri']
+        workingDays: [] as string[]
     });
 
     const [breakHours, setBreakHours] = useState({
-        lunchStart: '12:00',
-        lunchEnd: '13:00',
-        enableBreaks: true
+        lunchStart: '',
+        lunchEnd: '',
+        enableBreaks: false
     });
 
     const [selectedCalendar, setSelectedCalendar] = useState('');
 
-    // Load connected accounts - similar to ProfilePage
+    // Load user preferences
     useEffect(() => {
-        const seeded: ConnectedAccount[] = [];
-        if (state.user?.google_email_business) {
-            seeded.push({
-                id: 'google-business',
-                email: state.user.google_email_business,
-                provider: 'Google (Workspace)'
-            });
-        }
-        if (state.user?.google_email_personal) {
-            seeded.push({
-                id: 'google-personal',
-                email: state.user.google_email_personal,
-                provider: 'Google (Personal)'
-            });
-        }
-        if (seeded.length > 0) {
-            setConnectedAccounts(seeded);
-            setIsLoadingAccounts(false);
-        } 
-    }, [state.user?.google_email_business, state.user?.google_email_personal]);
+        const loadUserPreferences = async () => {
+            if (!state.user?.id) return;
+
+            try {
+                setIsLoadingPreferences(true);
+                const response = await accounts.getUserPreference({
+                    user_id: state.user.id
+                });
+
+                console.log('preferences', response);
+
+                if (response && response.data) {
+                    setUserPreferences(response.data);
+
+                    // Helper function to convert HHMM to HH:MM format
+                    const formatTime = (timeStr: string) => {
+                        if (!timeStr) return '';
+                        if (timeStr.includes(':')) return timeStr; // Already formatted
+                        if (timeStr.length === 4) {
+                            return `${timeStr.slice(0, 2)}:${timeStr.slice(2)}`;
+                        }
+                        return timeStr;
+                    };
+
+                    // Populate connected accounts from API data
+                    const apiAccounts: ConnectedAccount[] = [];
+                    if (response.data.primary_calendar && Array.isArray(response.data.primary_calendar)) {
+                        response.data.primary_calendar.forEach((cal: any) => {
+                            apiAccounts.push({
+                                id: cal.id,
+                                email: cal.name,
+                                provider: cal.id.includes('business') ? 'Google (Workspace)' : 'Google (Personal)'
+                            });
+                        });
+                    }
+                    setConnectedAccounts(apiAccounts);
+
+                    // Update form state with loaded preferences
+                    setWorkingHours({
+                        start: formatTime(response.data.working_hours) || '',
+                        end: formatTime(response.data.working_hours_end) || '',
+                        timezone: response.data.user_timezone || 'America/New_York',
+                        workingDays: response.data.working_days && Array.isArray(response.data.working_days)
+                            ? response.data.working_days
+                            : []
+                    });
+
+                    setBreakHours({
+                        lunchStart: formatTime(response.data.break_hours) || '',
+                        lunchEnd: formatTime(response.data.break_hours_end) || '',
+                        enableBreaks: !!(response.data.break_hours && response.data.break_hours_end)
+                    });
+
+                    if (response.data.primary_calendar && Array.isArray(response.data.primary_calendar) && response.data.primary_calendar.length > 0) {
+                        setSelectedCalendar(response.data.primary_calendar[0].id || '');
+                    }
+                }
+            } catch (error) {
+                console.error('Failed to load user preferences:', error);
+            } finally {
+                setIsLoadingPreferences(false);
+                setIsLoadingAccounts(false);
+            }
+        };
+
+        loadUserPreferences();
+    }, [state.user?.id]);
 
     const handleScheduleComplete = () => {
         setIsOnboardingComplete(true);
@@ -125,6 +174,17 @@ export default function SettingsPage() {
             <ProfilePage embedded />
         </div>
     );
+
+    // Helper to format 24h time into 12h am/pm
+const formatTime12Hour = (time: string | undefined) => {
+    if (!time) return "--:--";
+    const [hourStr, minute] = time.split(":");
+    let hour = parseInt(hourStr, 10);
+    const ampm = hour >= 12 ? "PM" : "AM";
+    hour = hour % 12 || 12;
+    return `${hour}:${minute} ${ampm}`;
+};
+
 
     // const renderScheduleSetup = () => {
     //     if (isOnboardingComplete) {
@@ -461,187 +521,295 @@ export default function SettingsPage() {
     //     );
     // };
 
+
+
 const renderScheduleSetup = () => {
+    if (isLoadingPreferences) {
+        return (
+            <div className="flex items-center justify-center py-12">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                    <p className="text-sm text-gray-600">Loading your schedule...</p>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div>
             {/* Heading */}
             <div className="mb-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-1">Schedule Setup</h3>
+                <h3 className="text-lg font-semibold text-gray-900 mb-1">Your Schedule</h3>
                 <p className="text-sm text-gray-500">
-                    Select your primary calendar and configure your working hours.
+                    Overview of your current calendar, working hours, and breaks.
                 </p>
             </div>
 
-            {/* Calendar Selection */}
-            <div className="space-y-6 mb-8">
-                <div className="bg-blue-50 rounded-xl p-6 shadow-sm border border-blue-100">
-                    <div className="flex items-start space-x-3">
-                        <div className="flex-shrink-0 w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center text-blue-600">
-                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                            </svg>
-                        </div>
-                        <div className="flex-1">
-                            <h4 className="text-base font-medium text-gray-900 mb-2">Calendar</h4>
-                            <p className="text-sm text-gray-600 mb-4">
-                                Select your primary calendar for event integration.
-                            </p>
-
-                            {isLoadingAccounts ? (
-                                <div className="flex items-center justify-center py-4">
-                                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                                </div>
-                            ) : connectedAccounts.length === 0 ? (
-                                <div className="text-center py-4 px-4 bg-gray-50 rounded-lg">
-                                    <p className="text-sm text-gray-600 mb-2">No connected accounts found</p>
-                                    <button
-                                        onClick={() => window.location.href = '/connect-accounts'}
-                                        className="text-sm text-blue-600 hover:text-blue-700 font-medium"
-                                    >
-                                        Connect an account first
-                                    </button>
-                                </div>
-                            ) : (
-                                <Select value={selectedCalendar} onValueChange={setSelectedCalendar}>
-                                    <SelectTrigger className="w-full">
-                                        <SelectValue placeholder="Select a calendar" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {connectedAccounts.map((account) => (
-                                            <SelectItem key={account.id} value={account.id}>
-                                                <div className="flex items-center">
-                                                    <span className="mr-2">
-                                                        {account.provider.includes('Workspace') ? '💼' : '📅'}
-                                                    </span>
-                                                    <span>{account.email}</span>
-                                                </div>
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            )}
-                        </div>
+            {/* Calendar Summary */}
+            <div className="bg-blue-50 rounded-xl p-6 shadow-sm border border-blue-100 mb-8">
+                <div className="flex items-start space-x-3">
+                    <div className="flex-shrink-0 w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center text-blue-600">
+                        📅
+                    </div>
+                    <div className="flex-1">
+                        <h4 className="text-base font-medium text-gray-900 mb-1">Calendar</h4>
+                        <p className="text-sm text-gray-600">
+                            {selectedCalendar
+                                ? connectedAccounts.find(a => a.id === selectedCalendar)?.email
+                                : "No calendar selected"}
+                        </p>
                     </div>
                 </div>
             </div>
 
-            {/* Working Hours & Breaks */}
+            {/* Working Hours & Breaks Summary */}
             <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-6 shadow-sm border border-blue-200">
                 <div className="flex items-start space-x-3">
                     <div className="flex-shrink-0 w-10 h-10 bg-blue-200 rounded-full flex items-center justify-center text-blue-700">
-                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
+                        ⏰
                     </div>
                     <div className="flex-1">
-                        <h4 className="text-base font-semibold text-gray-900 mb-2">Working Hours & Breaks</h4>
+                        <h4 className="text-base font-semibold text-gray-900 mb-4">Working Hours & Breaks</h4>
 
                         {/* Working Hours */}
-                        <div className="grid grid-cols-2 gap-4 border-b py-5 border-gray-300">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Start Time</label>
-                                <input
-                                    type="time"
-                                    value={workingHours.start}
-                                    onChange={(e) => setWorkingHours({ ...workingHours, start: e.target.value })}
-                                    className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm bg-white"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">End Time</label>
-                                <input
-                                    type="time"
-                                    value={workingHours.end}
-                                    onChange={(e) => setWorkingHours({ ...workingHours, end: e.target.value })}
-                                    className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm bg-white"
-                                />
-                            </div>
+                        <div className="mb-4">
+                            <p className="text-sm text-gray-500">Working Hours</p>
+                            <p className="text-gray-900 font-medium">
+                                {formatTime12Hour(workingHours.start)} – {formatTime12Hour(workingHours.end)}
+                            </p>
                         </div>
 
                         {/* Break Hours */}
-                        <div className="py-5 border-b border-gray-300">
-                            <div className="flex items-center justify-between mb-3">
-                                <label className="text-sm font-medium text-gray-700">Break Hours</label>
-                                <button
-                                    type="button"
-                                    onClick={() => setBreakHours({ ...breakHours, enableBreaks: !breakHours.enableBreaks })}
-                                    className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ${breakHours.enableBreaks ? 'bg-blue-600' : 'bg-gray-200'
-                                        }`}
-                                >
-                                    <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow transition duration-200 ${breakHours.enableBreaks ? 'translate-x-5' : 'translate-x-0'}`} />
-                                </button>
-                            </div>
-
-                            {breakHours.enableBreaks && (
-                                <div className="grid grid-cols-2 gap-4 mt-3">
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Lunch Start</label>
-                                        <input
-                                            type="time"
-                                            value={breakHours.lunchStart}
-                                            onChange={(e) => setBreakHours({ ...breakHours, lunchStart: e.target.value })}
-                                            className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm bg-white"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Lunch End</label>
-                                        <input
-                                            type="time"
-                                            value={breakHours.lunchEnd}
-                                            onChange={(e) => setBreakHours({ ...breakHours, lunchEnd: e.target.value })}
-                                            className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm bg-white"
-                                        />
-                                    </div>
-                                </div>
+                        <div className="mb-4">
+                            <p className="text-sm text-gray-500">Break Hours</p>
+                            {breakHours.enableBreaks ? (
+                                <p className="text-gray-900 font-medium">
+                                    {formatTime12Hour(breakHours.lunchStart)} – {formatTime12Hour(breakHours.lunchEnd)}
+                                </p>
+                            ) : (
+                                <p className="text-gray-600 italic">No breaks set</p>
                             )}
                         </div>
 
                         {/* Working Days */}
-                        <div className="py-5">
-                            <label className="block text-sm font-medium text-gray-700 mb-2">Working Days</label>
+                        <div>
+                            <p className="text-sm text-gray-500 mb-1">Working Days</p>
                             <div className="flex flex-wrap gap-2">
-                                {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day) => (
-                                    <button
+                                {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(day => (
+                                    <span
                                         key={day}
-                                        onClick={() => {
-                                            const newDays = workingHours.workingDays.includes(day)
-                                                ? workingHours.workingDays.filter(d => d !== day)
-                                                : [...workingHours.workingDays, day];
-                                            setWorkingHours({ ...workingHours, workingDays: newDays });
-                                        }}
-                                        className={`px-3 py-1.5 text-sm rounded-lg transition-all duration-150 shadow-sm ${workingHours.workingDays.includes(day)
-                                                ? 'bg-blue-600 text-white shadow'
-                                                : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+                                        className={`px-3 py-1.5 text-sm rounded-lg shadow-sm ${workingHours.workingDays.includes(day)
+                                            ? 'bg-blue-600 text-white'
+                                            : 'bg-gray-100 text-gray-600'
                                             }`}
                                     >
                                         {day}
-                                    </button>
+                                    </span>
                                 ))}
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-
-            {/* Save Button */}
-            <div className="flex justify-end mt-6">
-                <button
-                    onClick={() => {
-                        console.log({
-                            selectedCalendar,
-                            workingHours,
-                            breakHours
-                        });
-                        alert('Settings saved!');
-                    }}
-                    className="px-5 py-2 text-sm font-medium text-white bg-gradient-to-r from-green-500 to-green-600 rounded-lg hover:from-green-600 hover:to-green-700 shadow-md"
-                >
-                    Save Settings
-                </button>
-            </div>
         </div>
     );
 };
+
+
+
+
+// const renderScheduleSetup = () => {
+//     if (isLoadingPreferences) {
+//         return (
+//             <div className="flex items-center justify-center py-12">
+//                 <div className="text-center">
+//                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+//                     <p className="text-sm text-gray-600">Loading your preferences...</p>
+//                 </div>
+//             </div>
+//         );
+//     }
+
+//     return (
+//         <div>
+//             {/* Heading */}
+//             <div className="mb-6">
+//                 <h3 className="text-lg font-semibold text-gray-900 mb-1">Schedule Setup</h3>
+//                 <p className="text-sm text-gray-500">
+//                     Select your primary calendar and configure your working hours.
+//                 </p>
+//             </div>
+
+//             {/* Calendar Selection */}
+//             <div className="space-y-6 mb-8">
+//                 <div className="bg-blue-50 rounded-xl p-6 shadow-sm border border-blue-100">
+//                     <div className="flex items-start space-x-3">
+//                         <div className="flex-shrink-0 w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center text-blue-600">
+//                             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+//                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+//                             </svg>
+//                         </div>
+//                         <div className="flex-1">
+//                             <h4 className="text-base font-medium text-gray-900 mb-2">Calendar</h4>
+//                             <p className="text-sm text-gray-600 mb-4">
+//                                 Select your primary calendar for event integration.
+//                             </p>
+
+//                             {isLoadingAccounts ? (
+//                                 <div className="flex items-center justify-center py-4">
+//                                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+//                                 </div>
+//                             ) : connectedAccounts.length === 0 ? (
+//                                 <div className="text-center py-4 px-4 bg-gray-50 rounded-lg">
+//                                     <p className="text-sm text-gray-600 mb-2">No connected accounts found</p>
+//                                     <button
+//                                         onClick={() => window.location.href = '/connect-accounts'}
+//                                         className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+//                                     >
+//                                         Connect an account first
+//                                     </button>
+//                                 </div>
+//                             ) : (
+//                                 <Select value={selectedCalendar} onValueChange={setSelectedCalendar}>
+//                                     <SelectTrigger className="w-full">
+//                                         <SelectValue placeholder="Select a calendar" />
+//                                     </SelectTrigger>
+//                                     <SelectContent>
+//                                         {connectedAccounts.map((account) => (
+//                                             <SelectItem key={account.id} value={account.id}>
+//                                                 <div className="flex items-center">
+//                                                     <span className="mr-2">
+//                                                         {account.provider.includes('Workspace') ? '💼' : '📅'}
+//                                                     </span>
+//                                                     <span>{account.email}</span>
+//                                                 </div>
+//                                             </SelectItem>
+//                                         ))}
+//                                     </SelectContent>
+//                                 </Select>
+//                             )}
+//                         </div>
+//                     </div>
+//                 </div>
+//             </div>
+
+//             {/* Working Hours & Breaks */}
+//             <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-6 shadow-sm border border-blue-200">
+//                 <div className="flex items-start space-x-3">
+//                     <div className="flex-shrink-0 w-10 h-10 bg-blue-200 rounded-full flex items-center justify-center text-blue-700">
+//                         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+//                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+//                         </svg>
+//                     </div>
+//                     <div className="flex-1">
+//                         <h4 className="text-base font-semibold text-gray-900 mb-2">Working Hours & Breaks</h4>
+
+//                         {/* Working Hours */}
+//                         <div className="grid grid-cols-2 gap-4 border-b py-5 border-gray-300">
+//                             <div>
+//                                 <label className="block text-sm font-medium text-gray-700 mb-1">Start Time</label>
+//                                 <input
+//                                     type="time"
+//                                     value={workingHours.start}
+//                                     onChange={(e) => setWorkingHours({ ...workingHours, start: e.target.value })}
+//                                     className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm bg-white"
+//                                 />
+//                             </div>
+//                             <div>
+//                                 <label className="block text-sm font-medium text-gray-700 mb-1">End Time</label>
+//                                 <input
+//                                     type="time"
+//                                     value={workingHours.end}
+//                                     onChange={(e) => setWorkingHours({ ...workingHours, end: e.target.value })}
+//                                     className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm bg-white"
+//                                 />
+//                             </div>
+//                         </div>
+
+//                         {/* Break Hours */}
+//                         <div className="py-5 border-b border-gray-300">
+//                             <div className="flex items-center justify-between mb-3">
+//                                 <label className="text-sm font-medium text-gray-700">Break Hours</label>
+//                                 <button
+//                                     type="button"
+//                                     onClick={() => setBreakHours({ ...breakHours, enableBreaks: !breakHours.enableBreaks })}
+//                                     className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ${breakHours.enableBreaks ? 'bg-blue-600' : 'bg-gray-200'
+//                                         }`}
+//                                 >
+//                                     <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow transition duration-200 ${breakHours.enableBreaks ? 'translate-x-5' : 'translate-x-0'}`} />
+//                                 </button>
+//                             </div>
+
+//                             {breakHours.enableBreaks && (
+//                                 <div className="grid grid-cols-2 gap-4 mt-3">
+//                                     <div>
+//                                         <label className="block text-sm font-medium text-gray-700 mb-1">Lunch Start</label>
+//                                         <input
+//                                             type="time"
+//                                             value={breakHours.lunchStart}
+//                                             onChange={(e) => setBreakHours({ ...breakHours, lunchStart: e.target.value })}
+//                                             className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm bg-white"
+//                                         />
+//                                     </div>
+//                                     <div>
+//                                         <label className="block text-sm font-medium text-gray-700 mb-1">Lunch End</label>
+//                                         <input
+//                                             type="time"
+//                                             value={breakHours.lunchEnd}
+//                                             onChange={(e) => setBreakHours({ ...breakHours, lunchEnd: e.target.value })}
+//                                             className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm bg-white"
+//                                         />
+//                                     </div>
+//                                 </div>
+//                             )}
+//                         </div>
+
+//                         {/* Working Days */}
+//                         <div className="py-5">
+//                             <label className="block text-sm font-medium text-gray-700 mb-2">Working Days</label>
+//                             <div className="flex flex-wrap gap-2">
+//                                 {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day) => (
+//                                     <button
+//                                         key={day}
+//                                         onClick={() => {
+//                                             const newDays = workingHours.workingDays.includes(day)
+//                                                 ? workingHours.workingDays.filter(d => d !== day)
+//                                                 : [...workingHours.workingDays, day];
+//                                             setWorkingHours({ ...workingHours, workingDays: newDays });
+//                                         }}
+//                                         className={`px-3 py-1.5 text-sm rounded-lg transition-all duration-150 shadow-sm ${workingHours.workingDays.includes(day)
+//                                                 ? 'bg-blue-600 text-white shadow'
+//                                                 : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+//                                             }`}
+//                                     >
+//                                         {day}
+//                                     </button>
+//                                 ))}
+//                             </div>
+//                         </div>
+//                     </div>
+//                 </div>
+//             </div>
+
+//             {/* Save Button */}
+//             <div className="flex justify-end mt-6">
+//                 <button
+//                     onClick={() => {
+//                         console.log({
+//                             selectedCalendar,
+//                             workingHours,
+//                             breakHours
+//                         });
+//                         alert('Settings saved!');
+//                     }}
+//                     className="px-5 py-2 text-sm font-medium text-white bg-gradient-to-r from-green-500 to-green-600 rounded-lg hover:from-green-600 hover:to-green-700 shadow-md"
+//                 >
+//                     Save Settings
+//                 </button>
+//             </div>
+//         </div>
+//     );
+// };
 
     
     const renderNotificationSettings = () => (

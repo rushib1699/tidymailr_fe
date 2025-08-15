@@ -46,7 +46,7 @@ export default function Layout({ children }: LayoutProps) {
             </div>
             
             {/* Error Display */}
-            {state.error && (
+            {/* {state.error && (
               <div className="bg-red-50 border border-red-200 rounded-md p-3">
                 <div className="flex">
                   <div className="flex-shrink-0">
@@ -59,7 +59,7 @@ export default function Layout({ children }: LayoutProps) {
                   </div>
                 </div>
               </div>
-            )}
+            )} */}
           </div>
         </div>
 

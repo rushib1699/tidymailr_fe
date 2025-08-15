@@ -27,6 +27,12 @@ export default function StepCalendar({ data, updateData, onStepComplete }: StepP
   const [calendars, setCalendars] = useState<Calendar[]>([]);
   const [loadingCalendars, setLoadingCalendars] = useState(false);
 
+  useEffect(() => {
+  if (selectedCalendar) {
+    onStepComplete(true);
+  }
+}, [selectedCalendar]);
+
   // Seed connected accounts from state.user only
   useEffect(() => {
     const seeded: ConnectedAccount[] = [];
