@@ -10,20 +10,33 @@ export default function ConnectAccountsPage() {
   const [error, setError] = useState<string | null>(null);
 
   const hasConnectedAccounts = state.connectedAccounts.workspace || state.connectedAccounts.personal;
-  console.log("state",state)
+  console.log("state", state)
+
+  // right above return()
+  const hasGoogleEmail =
+    !!state.user?.google_email_personal || !!state.user?.google_email_business;
 
   const handleContinue = () => {
-    navigate('/onboarding');
+    if (hasGoogleEmail) {
+      navigate('/dashboard');
+    } else {
+      navigate('/onboarding');
+    }
   };
 
   const handleSkip = () => {
     navigate('/dashboard');
   }
 
+  const handleOnboardingStep = () => {
+    navigate('/onboarding');
+  }
+
+  console.log("state", state.user)
   const googleClientId = '289903674312-44khu8d36iu2gmr6gig9elc6vs32h04a.apps.googleusercontent.com'
- const googleRedirectUri = 'http://localhost:5173/connect-accounts'
-//  `${window.location.origin}/connect-accounts`;
- 
+  const googleRedirectUri = 'http://localhost:5173/connect-accounts'
+  //  `${window.location.origin}/connect-accounts`;
+
 
   // const googleClientId = useMemo(() => (import.meta as any).env?.VITE_GOOGLE_CLIENT_ID as string | undefined, []);
   // const googleRedirectUri = useMemo(() => (
@@ -117,7 +130,7 @@ export default function ConnectAccountsPage() {
     };
 
     exchange();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const ConnectionButton = ({ type, label }: { type: 'workspace' | 'personal'; label: string }) => {
@@ -128,11 +141,10 @@ export default function ConnectAccountsPage() {
       <button
         onClick={() => startGoogleConnect(type)}
         disabled={isConnected || isLoading}
-        className={`w-full flex items-center justify-center px-6 py-3 border rounded-lg font-medium transition-all ${
-          isConnected
-            ? 'bg-accent-50 border-accent-200 text-accent-700 cursor-not-allowed'
-            : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400'
-        }`}
+        className={`w-full flex items-center justify-center px-6 py-3 border rounded-lg font-medium transition-all ${isConnected
+          ? 'bg-accent-50 border-accent-200 text-accent-700 cursor-not-allowed'
+          : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400'
+          }`}
       >
         <div className="flex items-center space-x-3">
           <svg className="w-5 h-5" viewBox="0 0 24 24">
@@ -199,24 +211,32 @@ export default function ConnectAccountsPage() {
               </div>
             )}
           </div>
-          
+
           {hasConnectedAccounts && (
             <div className="mt-8">
               <button
                 onClick={handleContinue}
                 className="w-full bg-primary-600 text-white py-2 px-4 rounded-md hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 transition-colors"
               >
-                Continue to Setup
+                {hasGoogleEmail ? 'Continue to Dashboard' : 'Continue to Setup'}
               </button>
             </div>
           )}
+
 
           <div className="mt-6 text-center">
             <button
               onClick={handleSkip}
               className="text-sm text-gray-500 hover:text-gray-700 transition-colors"
             >
-              Skip for now
+              Skip for now (Dev version)
+            </button>
+
+            <button
+              onClick={handleOnboardingStep}
+              className="text-sm text-gray-500 hover:text-gray-700 transition-colors"
+            >
+              Move to onboarding (Dev version)
             </button>
           </div>
         </div>

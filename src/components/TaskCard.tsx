@@ -31,7 +31,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { cn } from '@/lib/utils';
 
 interface Task {
   id: string;
@@ -142,52 +141,55 @@ export default function TaskCard({ task, onUpdate, onDelete }: TaskCardProps) {
     }
   };
 
-  const cardClassName = cn(
-    "h-full transition-all",
-    task.priority === 'high' && "border-red-200",
-    task.priority === 'medium' && "border-yellow-200",
-    task.priority === 'low' && "border-green-200",
-    isDeleting && "opacity-50"
-  );
+  const getCardClassName = () => {
+    let className = "h-full transition-all";
+    if (task.priority === 'high') className += " border-red-200";
+    if (task.priority === 'medium') className += " border-yellow-200";
+    if (task.priority === 'low') className += " border-green-200";
+    if (isDeleting) className += " opacity-50";
+    return className;
+  };
 
   if (isEditing) {
     return (
-      <Card className={cardClassName}>
-        <CardHeader className="pb-3">
-          <div className="space-y-3">
-            <div className="space-y-2">
-              <Label htmlFor={`title-${task.id}`}>Title</Label>
+      <Card className={getCardClassName()}>
+        <CardHeader className="pb-2">
+          <div className="space-y-2">
+            <div className="space-y-1">
+              <Label htmlFor={`title-${task.id}`} className="text-xs">Title</Label>
               <Input
                 id={`title-${task.id}`}
                 value={editedTask.title}
                 onChange={(e) => setEditedTask({ ...editedTask, title: e.target.value })}
                 placeholder="Task title"
                 disabled={isUpdating}
+                className="h-8"
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor={`desc-${task.id}`}>Description</Label>
+            <div className="space-y-1">
+              <Label htmlFor={`desc-${task.id}`} className="text-xs">Description</Label>
               <Textarea
                 id={`desc-${task.id}`}
                 value={editedTask.description}
                 onChange={(e) => setEditedTask({ ...editedTask, description: e.target.value })}
                 placeholder="Task description"
-                rows={3}
+                rows={2}
                 disabled={isUpdating}
+                className="min-h-[60px] resize-none"
               />
             </div>
           </div>
         </CardHeader>
-        <CardContent className="pt-0">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div className="space-y-2">
-              <Label htmlFor={`priority-${task.id}`}>Priority</Label>
+        <CardContent className="py-0">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <div className="space-y-1">
+              <Label htmlFor={`priority-${task.id}`} className="text-xs">Priority</Label>
               <Select
                 value={editedTask.priority}
                 onValueChange={(value) => setEditedTask({ ...editedTask, priority: value as 'high' | 'medium' | 'low' })}
                 disabled={isUpdating}
               >
-                <SelectTrigger id={`priority-${task.id}`}>
+                <SelectTrigger id={`priority-${task.id}`} className="h-8">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -197,14 +199,14 @@ export default function TaskCard({ task, onUpdate, onDelete }: TaskCardProps) {
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor={`status-${task.id}`}>Status</Label>
+            <div className="space-y-1">
+              <Label htmlFor={`status-${task.id}`} className="text-xs">Status</Label>
               <Select
                 value={editedTask.status}
                 onValueChange={(value) => setEditedTask({ ...editedTask, status: value as 'pending' | 'in-progress' | 'completed' })}
                 disabled={isUpdating}
               >
-                <SelectTrigger id={`status-${task.id}`}>
+                <SelectTrigger id={`status-${task.id}`} className="h-8">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -216,12 +218,13 @@ export default function TaskCard({ task, onUpdate, onDelete }: TaskCardProps) {
             </div>
           </div>
         </CardContent>
-        <CardFooter className="flex justify-end gap-2 pt-3">
+        <CardFooter className="flex justify-end gap-2 pt-2">
           <Button
             variant="outline"
             size="sm"
             onClick={handleCancel}
             disabled={isUpdating}
+            className="h-7 px-2 text-xs"
           >
             Cancel
           </Button>
@@ -229,10 +232,11 @@ export default function TaskCard({ task, onUpdate, onDelete }: TaskCardProps) {
             size="sm"
             onClick={handleSave}
             disabled={isUpdating || !editedTask.title.trim()}
+            className="h-7 px-2 text-xs"
           >
             {isUpdating ? (
               <>
-                <Loader2 className="mr-2 h-3 w-3 animate-spin" />
+                <Loader2 className="mr-1 h-3 w-3 animate-spin" />
                 Saving...
               </>
             ) : (
@@ -246,106 +250,108 @@ export default function TaskCard({ task, onUpdate, onDelete }: TaskCardProps) {
 
   return (
     <>
-      <Card className={cardClassName}>
-        <CardHeader className="pb-3">
+      <Card className={getCardClassName()}>
+        <CardHeader className="pb-2">
           <div className="flex justify-between items-start gap-2">
-            <h3 className="text-base sm:text-lg font-semibold line-clamp-2 flex-1">
+            <h3 className="text-sm sm:text-base font-semibold line-clamp-2 flex-1">
               {task.title}
             </h3>
             <div className="flex items-center gap-1 flex-shrink-0">
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8"
+                className="h-7 w-7"
                 onClick={() => setIsEditing(true)}
                 disabled={isUpdating || isDeleting}
               >
-                <Edit2 className="h-4 w-4" />
+                <Edit2 className="h-3 w-3" />
               </Button>
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8 hover:text-destructive"
+                className="h-7 w-7 hover:text-destructive"
                 onClick={() => setShowDeleteDialog(true)}
                 disabled={isUpdating || isDeleting}
               >
                 {isDeleting ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <Loader2 className="h-3 w-3 animate-spin" />
                 ) : (
-                  <Trash2 className="h-4 w-4" />
+                  <Trash2 className="h-3 w-3" />
                 )}
               </Button>
             </div>
           </div>
           {task.description && (
-            <p className="text-sm text-muted-foreground line-clamp-3 mt-2">
+            <p className="text-xs text-muted-foreground line-clamp-2 mt-1">
               {task.description}
             </p>
           )}
         </CardHeader>
-        <CardContent className="pt-0">
-          <div className="flex flex-wrap items-center gap-2">
+        <CardContent className="py-0">
+          <div className="flex flex-wrap items-center gap-1">
             <Badge
               variant={priorityConfig[task.priority].variant}
-              className={priorityConfig[task.priority].className}
+              className={`${priorityConfig[task.priority].className} text-xs px-2 py-0 h-5`}
             >
               {task.priority.charAt(0).toUpperCase() + task.priority.slice(1)}
             </Badge>
             <Badge
               variant="secondary"
-              className={statusConfig[task.status].className}
+              className={`${statusConfig[task.status].className} text-xs px-2 py-0 h-5`}
             >
               {task.status.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}
             </Badge>
           </div>
         </CardContent>
-        <CardFooter className="flex items-center justify-between pt-3">
+        <CardFooter className="flex items-center justify-between pt-2">
           <div className="flex items-center gap-1">
             <Button
               variant={task.status === 'pending' ? 'secondary' : 'ghost'}
               size="icon"
-              className="h-8 w-8"
+              className="h-7 w-7"
               onClick={() => handleStatusChange('pending')}
               disabled={isUpdating || isDeleting}
               title="Mark as Pending"
             >
-              <Clock className="h-4 w-4" />
+              <Clock className="h-3 w-3" />
             </Button>
             <Button
               variant={task.status === 'in-progress' ? 'secondary' : 'ghost'}
               size="icon"
-              className="h-8 w-8"
+              className="h-7 w-7"
               onClick={() => handleStatusChange('in-progress')}
               disabled={isUpdating || isDeleting}
               title="Mark as In Progress"
             >
-              <Zap className="h-4 w-4" />
+              <Zap className="h-3 w-3" />
             </Button>
             <Button
               variant={task.status === 'completed' ? 'secondary' : 'ghost'}
               size="icon"
-              className="h-8 w-8"
+              className="h-7 w-7"
               onClick={() => handleStatusChange('completed')}
               disabled={isUpdating || isDeleting}
               title="Mark as Completed"
             >
-              <CheckCircle className="h-4 w-4" />
+              <CheckCircle className="h-3 w-3" />
             </Button>
           </div>
           
-          {isUpdating && (
-            <span className="text-xs text-muted-foreground flex items-center">
-              <Loader2 className="mr-1 h-3 w-3 animate-spin" />
-              Updating...
-            </span>
-          )}
-          
-          {task.createdAt && (
-            <div className="flex items-center text-xs text-muted-foreground">
-              <Calendar className="mr-1 h-3 w-3" />
-              {new Date(task.createdAt).toLocaleDateString()}
-            </div>
-          )}
+          <div className="flex items-center gap-2">
+            {isUpdating && (
+              <span className="text-xs text-muted-foreground flex items-center">
+                <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+                Updating...
+              </span>
+            )}
+            
+            {task.createdAt && (
+              <div className="flex items-center text-xs text-muted-foreground">
+                <Calendar className="mr-1 h-3 w-3" />
+                {new Date(task.createdAt).toLocaleDateString()}
+              </div>
+            )}
+          </div>
         </CardFooter>
       </Card>
 

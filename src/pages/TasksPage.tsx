@@ -160,7 +160,7 @@
 //       if (!state.user?.id) {
 //         throw new Error('User not found');
 //       }
-      
+
 //       await tasks.deleteTask(state.user.id, taskId);
 //       setAllTasks(prev => prev.filter(task => task.id !== taskId));
 //       actions.setError(null);
@@ -667,7 +667,7 @@ export default function TasksPage() {
       if (s && ['all', 'pending', 'in-progress', 'completed'].includes(s)) setSelectedStatus(s)
       if (sb && ['priority', 'created', 'title', 'due'].includes(sb)) setSortBy(sb)
       if (v && ['glance', 'agenda', 'list', 'board'].includes(v)) setView(v)
-    } catch {}
+    } catch { }
   }, [])
 
   useEffect(() => {
@@ -676,7 +676,7 @@ export default function TasksPage() {
       localStorage.setItem('tasks:status', selectedStatus)
       localStorage.setItem('tasks:sortBy', sortBy)
       localStorage.setItem('tasks:view:v2', view)
-    } catch {}
+    } catch { }
   }, [selectedPriority, selectedStatus, sortBy, view])
 
   useEffect(() => {
@@ -788,7 +788,7 @@ export default function TasksPage() {
         createdAt: new Date().toISOString(),
       })
 
-      const normalized = 'id' in created && typeof (created as any).id !== 'string' ? normalizeTask(created as ApiTask) : (created as NormalizedTask)
+      const normalized = 'id' in created && typeof (created as any).id !== 'string' ? normalizeTask(created as unknown as ApiTask) : (created as NormalizedTask)
       setAllTasks((prev) => [normalized, ...prev])
       setNewTask({ title: '', description: '', priority: 'medium', status: 'pending' })
       setShowCreateForm(false)
@@ -806,7 +806,7 @@ export default function TasksPage() {
       if (!state.user?.id) throw new Error('User not found')
 
       const updated = await tasks.updateTask(state.user.id, taskId, updates)
-      const normalized = (updated && typeof (updated as any).id !== 'string') ? normalizeTask(updated as ApiTask) : (updated as NormalizedTask)
+      const normalized = (updated && typeof (updated as any).id !== 'string') ? normalizeTask(updated as unknown as ApiTask) : (updated as NormalizedTask)
 
       setAllTasks((prev) => prev.map((t) => (t.id === taskId ? { ...t, ...normalized } : t)))
       actions.setError(null)
@@ -1005,7 +1005,7 @@ export default function TasksPage() {
                     <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleUpdateTask(t.id, { status: t.status === 'completed' ? 'pending' : 'completed' })} title={t.status === 'completed' ? 'Mark as Pending' : 'Mark as Completed'}>
                       {t.status === 'completed' ? <CheckCircle className="h-4 w-4" /> : <Clock className="h-4 w-4" />}
                     </Button>
-                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => {}}>
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { }}>
                       <Edit2 className="h-4 w-4" />
                     </Button>
                     <Button variant="ghost" size="icon" className="h-7 w-7 hover:text-destructive" onClick={() => handleDeleteTask(t.id)}>
@@ -1047,7 +1047,7 @@ export default function TasksPage() {
                     <Button variant={t.status === 'pending' ? 'secondary' : 'ghost'} size="icon" className="h-8 w-8" onClick={() => handleUpdateTask(t.id, { status: 'pending' })} title="Mark as Pending"><Clock className="h-4 w-4" /></Button>
                     <Button variant={t.status === 'in-progress' ? 'secondary' : 'ghost'} size="icon" className="h-8 w-8" onClick={() => handleUpdateTask(t.id, { status: 'in-progress' })} title="Mark as In Progress"><Zap className="h-4 w-4" /></Button>
                     <Button variant={t.status === 'completed' ? 'secondary' : 'ghost'} size="icon" className="h-8 w-8" onClick={() => handleUpdateTask(t.id, { status: 'completed' })} title="Mark as Completed"><CheckCircle className="h-4 w-4" /></Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => {}}><Edit2 className="h-4 w-4" /></Button>
+                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { }}><Edit2 className="h-4 w-4" /></Button>
                     <Button variant="ghost" size="icon" className="h-8 w-8 hover:text-destructive" onClick={() => handleDeleteTask(t.id)}><Trash2 className="h-4 w-4" /></Button>
                   </div>
                 </div>
@@ -1155,10 +1155,12 @@ export default function TasksPage() {
         )}
 
         {/* Filters — minimal */}
+        {/* Filters — minimal */}
         <Card className="mb-6 sm:mb-8 rounded-2xl">
           <CardContent className="p-4 sm:p-6">
-            <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-              <div className="space-y-2">
+            <div className="flex flex-wrap gap-4">
+              {/* Priority Filter */}
+              <div className="flex-1 min-w-[200px] space-y-2">
                 <Label htmlFor="priority-filter">Priority</Label>
                 <Select value={selectedPriority} onValueChange={(v: any) => setSelectedPriority(v)}>
                   <SelectTrigger id="priority-filter" className="rounded-xl">
@@ -1172,7 +1174,9 @@ export default function TasksPage() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="space-y-2">
+
+              {/* Status Filter */}
+              <div className="flex-1 min-w-[200px] space-y-2">
                 <Label htmlFor="status-filter">Status</Label>
                 <Select value={selectedStatus} onValueChange={(v: any) => setSelectedStatus(v)}>
                   <SelectTrigger id="status-filter" className="rounded-xl">
@@ -1186,7 +1190,9 @@ export default function TasksPage() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="space-y-2">
+
+              {/* Sort By */}
+              <div className="flex-1 min-w-[200px] space-y-2">
                 <Label htmlFor="sort-by">Sort by</Label>
                 <Select value={sortBy} onValueChange={(v: any) => setSortBy(v)}>
                   <SelectTrigger id="sort-by" className="rounded-xl">
@@ -1200,18 +1206,45 @@ export default function TasksPage() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="space-y-2">
+
+              {/* View Buttons */}
+              <div className="flex-1 min-w-[320px] space-y-2">
                 <Label>View</Label>
-                <div className="grid grid-cols-4 gap-2">
-                  <Button variant={view === 'glance' ? 'default' : 'outline'} onClick={() => setView('glance')} className="rounded-xl">Glance</Button>
-                  <Button variant={view === 'agenda' ? 'default' : 'outline'} onClick={() => setView('agenda')} className="rounded-xl">Agenda</Button>
-                  <Button variant={view === 'list' ? 'default' : 'outline'} onClick={() => setView('list')} className="rounded-xl">List</Button>
-                  <Button variant={view === 'board' ? 'default' : 'outline'} onClick={() => setView('board')} className="rounded-xl">Board</Button>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                  <Button
+                    variant={view === 'glance' ? 'default' : 'outline'}
+                    onClick={() => setView('glance')}
+                    className="rounded-xl"
+                  >
+                    Glance
+                  </Button>
+                  <Button
+                    variant={view === 'agenda' ? 'default' : 'outline'}
+                    onClick={() => setView('agenda')}
+                    className="rounded-xl"
+                  >
+                    Agenda
+                  </Button>
+                  <Button
+                    variant={view === 'list' ? 'default' : 'outline'}
+                    onClick={() => setView('list')}
+                    className="rounded-xl"
+                  >
+                    List
+                  </Button>
+                  <Button
+                    variant={view === 'board' ? 'default' : 'outline'}
+                    onClick={() => setView('board')}
+                    className="rounded-xl"
+                  >
+                    Board
+                  </Button>
                 </div>
               </div>
             </div>
           </CardContent>
         </Card>
+
 
         {/* Views */}
         {view === 'glance' && <GlanceView />}
@@ -1243,6 +1276,98 @@ export default function TasksPage() {
           )
         )}
       </div>
+
+      {/* Create Task Dialog */}
+      <Dialog open={showCreateForm} onOpenChange={setShowCreateForm}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Create New Task</DialogTitle>
+            <DialogDescription>
+              Add a new task to your bucket. Fill in the details below.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleCreateTask} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="title">Title</Label>
+              <Input
+                id="title"
+                value={newTask.title}
+                onChange={(e) => setNewTask({ ...newTask, title: e.target.value })}
+                placeholder="Enter task title"
+                required
+                disabled={isCreating}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="description">Description</Label>
+              <Textarea
+                id="description"
+                value={newTask.description}
+                onChange={(e) => setNewTask({ ...newTask, description: e.target.value })}
+                placeholder="Enter task description (optional)"
+                rows={3}
+                disabled={isCreating}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="priority">Priority</Label>
+                <Select
+                  value={newTask.priority}
+                  onValueChange={(value) => setNewTask({ ...newTask, priority: value as 'high' | 'medium' | 'low' })}
+                  disabled={isCreating}
+                >
+                  <SelectTrigger id="priority">
+                    <SelectValue placeholder="Select priority" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="high">High</SelectItem>
+                    <SelectItem value="medium">Medium</SelectItem>
+                    <SelectItem value="low">Low</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="status">Status</Label>
+                <Select
+                  value={newTask.status}
+                  onValueChange={(value) => setNewTask({ ...newTask, status: value as 'pending' | 'in-progress' | 'completed' })}
+                  disabled={isCreating}
+                >
+                  <SelectTrigger id="status">
+                    <SelectValue placeholder="Select status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="in-progress">In Progress</SelectItem>
+                    <SelectItem value="completed">Completed</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="flex justify-end gap-3 pt-4">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setShowCreateForm(false)}
+                disabled={isCreating}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" disabled={isCreating || !newTask.title.trim()}>
+                {isCreating ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Creating...
+                  </>
+                ) : (
+                  'Create Task'
+                )}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
@@ -1280,3 +1405,5 @@ function CardsSkeleton() {
     </div>
   )
 }
+
+
