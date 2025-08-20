@@ -34,7 +34,7 @@ export default function ConnectAccountsPage() {
 
   console.log("state", state.user)
   const googleClientId = '289903674312-44khu8d36iu2gmr6gig9elc6vs32h04a.apps.googleusercontent.com'
-  const googleRedirectUri = 'http://localhost:5173/connect-accounts'
+  const googleRedirectUri = `${window.location.origin}/connect-accounts`;
   //  `${window.location.origin}/connect-accounts`;
 
 
